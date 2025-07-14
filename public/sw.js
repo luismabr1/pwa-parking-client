@@ -1,5 +1,10 @@
-const CACHE_NAME = "parking-pwa-client-v1"
-const urlsToCache = ["/", "/manifest.json"]
+const CACHE_NAME = "parking-pwa-client-v1";
+const urlsToCache = [
+  "/",
+  "/manifest.json",
+  "/_next/static/css/*.css", // Cachear CSS estático (ajusta según tus rutas)
+  "/icons/*.svg", // Añade rutas de íconos si las tienes
+];
 
 // Install event
 self.addEventListener("install", (event) => {
@@ -37,21 +42,26 @@ self.addEventListener("activate", (event) => {
 // Fetch event
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") {
-    return
+    return;
+  }
+
+  // Excluir rutas de _next y _next/data
+  if (event.request.url.includes("_next/static") || event.request.url.includes("_next/data")) {
+    return;
   }
 
   if (!event.request.url.startsWith(self.location.origin)) {
-    return
+    return;
   }
 
   event.respondWith(
     caches.match(event.request).then((response) => {
       if (response) {
-        return response
+        return response;
       }
 
       return fetch(event.request).catch((error) => {
-        console.log("🌐 Fetch falló para:", event.request.url)
+        console.log("🌐 Fetch falló para:", event.request.url);
         if (event.request.destination === "document") {
           return new Response(
             `
@@ -85,13 +95,13 @@ self.addEventListener("fetch", (event) => {
               statusText: "OK",
               headers: { "Content-Type": "text/html" },
             },
-          )
+          );
         }
-        return new Response("", { status: 404, statusText: "Not Found" })
-      })
+        return new Response("", { status: 404, statusText: "Not Found" });
+      });
     }),
-  )
-})
+  );
+});
 
 // Push event for notifications
 self.addEventListener("push", (event) => {

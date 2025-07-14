@@ -128,22 +128,23 @@ export default function RootLayout({
 
         {/* Service Worker Registration */}
         <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              if ('serviceWorker' in navigator) {
-                window.addEventListener('load', function() {
-                  navigator.serviceWorker.register('/sw.js')
-                    .then(function(registration) {
-                      console.log('✅ SW registrado:', registration.scope);
-                    })
-                    .catch(function(error) {
-                      console.log('❌ SW falló:', error);
-                    });
+            dangerouslySetInnerHTML={{
+              __html: `
+                window.addEventListener('load', () => {
+                  if ('serviceWorker' in navigator) {
+                    const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+                    if (isProduction) {
+                      navigator.serviceWorker.register('/sw.js')
+                        .then((registration) => console.log('✅ SW registrado:', registration.scope))
+                        .catch((error) => console.log('❌ SW falló:', error));
+                    } else {
+                      console.log('⚠️ Service Worker desactivado en desarrollo');
+                    }
+                  }
                 });
-              }
-            `,
-          }}
-        />
+              `,
+            }}
+          />
       </head>
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
