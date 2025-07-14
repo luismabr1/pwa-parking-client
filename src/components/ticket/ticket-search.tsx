@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Search, AlertCircle, QrCode } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import QRScannerComponent from "./qr-scanner"
+import QRScannerComponent from "../qr-scanner"
 
 export default function TicketSearch() {
   const [ticketCode, setTicketCode] = useState("")
@@ -37,12 +37,7 @@ export default function TicketSearch() {
       console.log(`🔍 Búsqueda: Verificando ticket ${cleanTicketCode}`)
 
       // Usar directamente la ruta del ticket para verificar si existe
-      // Si tienes control sobre la API, asegúrate de que permita CORS en el backend.
-      // Para desarrollo local, puedes usar un proxy o configurar los headers CORS en el backend.
-      // Aquí solo hacemos el fetch normalmente; el CORS debe resolverse en el servidor.
-      const response = await fetch(`https://parking-app-orpin.vercel.app/api/ticket/${cleanTicketCode}`, {
-        method: "GET",
-      })
+      const response = await fetch(`/api/ticket/${cleanTicketCode}`)
 
       if (response.ok) {
         const ticket = await response.json()

@@ -1,10 +1,10 @@
-import TicketSearch from "@/components/ticket-search"
-import PWAInstallPrompt from "@/components/pwa-install-prompt"
-import NotificationSettings from "@/components/notification-settings"
+import TicketSearch from "@/components/ticket/ticket-search"
+import PWAInstallPrompt from "@/components/notifications/pwa-install-prompt"
+import NotificationSettings from "@/components/notifications/notification-settings"
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <main className="min-h-screen bg-gradient-to-br p-4">
       <div className="max-w-md mx-auto space-y-6">
         <div className="text-center py-8">
           <h1 className="text-3xl font-bold text-gray-800 mb-2">Sistema de Estacionamiento</h1>
