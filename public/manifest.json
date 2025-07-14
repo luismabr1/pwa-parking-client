@@ -5,56 +5,56 @@
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#3b82f6",
+  "theme_color": "#000000",
   "orientation": "portrait-primary",
   "scope": "/",
   "lang": "es",
   "categories": ["business", "productivity", "utilities"],
   "icons": [
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%233b82f6'/%3E%3Ctext x='50' y='55' font-family='Arial' font-size='40' fill='white' text-anchor='middle'%3EP%3C/text%3E%3C/svg%3E",
+      "src": "/logo.png",
       "sizes": "72x72",
       "type": "image/svg+xml",
       "purpose": "maskable any"
     },
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%233b82f6'/%3E%3Ctext x='50' y='55' font-family='Arial' font-size='40' fill='white' text-anchor='middle'%3EP%3C/text%3E%3C/svg%3E",
+      "src": "/logo.png",
       "sizes": "96x96",
       "type": "image/svg+xml",
       "purpose": "maskable any"
     },
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%233b82f6'/%3E%3Ctext x='50' y='55' font-family='Arial' font-size='40' fill='white' text-anchor='middle'%3EP%3C/text%3E%3C/svg%3E",
+      "src": "/logo.png",
       "sizes": "128x128",
       "type": "image/svg+xml",
       "purpose": "maskable any"
     },
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%233b82f6'/%3E%3Ctext x='50' y='55' font-family='Arial' font-size='40' fill='white' text-anchor='middle'%3EP%3C/text%3E%3C/svg%3E",
+      "src": "/logo.png",
       "sizes": "144x144",
       "type": "image/svg+xml",
       "purpose": "maskable any"
     },
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%233b82f6'/%3E%3Ctext x='50' y='55' font-family='Arial' font-size='40' fill='white' text-anchor='middle'%3EP%3C/text%3E%3C/svg%3E",
+      "src": "/logo.png",
       "sizes": "152x152",
       "type": "image/svg+xml",
       "purpose": "maskable any"
     },
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%233b82f6'/%3E%3Ctext x='50' y='55' font-family='Arial' font-size='40' fill='white' text-anchor='middle'%3EP%3C/text%3E%3C/svg%3E",
+      "src": "/logo.png",
       "sizes": "192x192",
       "type": "image/svg+xml",
       "purpose": "maskable any"
     },
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%233b82f6'/%3E%3Ctext x='50' y='55' font-family='Arial' font-size='40' fill='white' text-anchor='middle'%3EP%3C/text%3E%3C/svg%3E",
+      "src": "/logo.png",
       "sizes": "384x384",
       "type": "image/svg+xml",
       "purpose": "maskable any"
     },
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%233b82f6'/%3E%3Ctext x='50' y='55' font-family='Arial' font-size='40' fill='white' text-anchor='middle'%3EP%3C/text%3E%3C/svg%3E",
+      "src": "/logo.png",
       "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "maskable any"
@@ -68,7 +68,7 @@
       "url": "/?action=search",
       "icons": [
         {
-          "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%233b82f6'/%3E%3Ctext x='50' y='55' font-family='Arial' font-size='30' fill='white' text-anchor='middle'%3E🔍%3C/text%3E%3C/svg%3E",
+          "src": "/logo.png",
           "sizes": "96x96",
           "type": "image/svg+xml"
         }
@@ -81,7 +81,7 @@
       "url": "/admin",
       "icons": [
         {
-          "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%233b82f6'/%3E%3Ctext x='50' y='55' font-family='Arial' font-size='30' fill='white' text-anchor='middle'%3E⚙️%3C/text%3E%3C/svg%3E",
+          "src": "/logo.png",
           "sizes": "96x96",
           "type": "image/svg+xml"
         }
@@ -90,11 +90,18 @@
   ],
   "screenshots": [
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 390 844'%3E%3Crect width='390' height='844' fill='%23f8fafc'/%3E%3Crect x='20' y='100' width='350' height='200' rx='10' fill='%233b82f6'/%3E%3Ctext x='195' y='180' font-family='Arial' font-size='24' fill='white' text-anchor='middle'%3EParking PWA%3C/text%3E%3Ctext x='195' y='220' font-family='Arial' font-size='16' fill='white' text-anchor='middle'%3ESistema de Estacionamiento%3C/text%3E%3C/svg%3E",
+      "src": "/screenshot-mobile.png",
       "sizes": "390x844",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "form_factor": "narrow",
-      "label": "Vista principal móvil"
+      "label": "Vista principal móvil - Búsqueda de tickets"
+    },
+    {
+      "src": "/screenshot-desktop.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Vista principal escritorio"
     }
   ],
   "related_applications": [],

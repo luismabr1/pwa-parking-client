@@ -5,51 +5,63 @@ import "./globals.css"
 import { ThemeProvider } from "@/components/theme/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
 import { Toaster as Sonner } from "@/components/ui/sonner"
+import { APP_CONFIG, getLogoSrc } from "@/config/app-config"
 
 const inter = Inter({ subsets: ["latin"] })
 
+const logoSrc = getLogoSrc()
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
+
 export const metadata: Metadata = {
-  title: "Parking PWA - Sistema de Estacionamiento",
-  description:
-    "Sistema completo de gestión de estacionamiento con tarifas inteligentes, pagos móviles y panel de administración. Instala la app para acceso rápido y notificaciones.",
+  title: APP_CONFIG.app.name,
+  description: APP_CONFIG.app.description,
   keywords: ["estacionamiento", "parking", "pwa", "gestión", "pagos", "móvil", "app"],
-  authors: [{ name: "Parking PWA Team" }],
-  creator: "Parking PWA",
-  publisher: "Parking PWA",
+  authors: [{ name: APP_CONFIG.company.name }],
+  creator: APP_CONFIG.company.name,
+  publisher: APP_CONFIG.company.name,
   formatDetection: {
     email: false,
     address: false,
     telephone: false,
   },
-  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"),
+  metadataBase: new URL(baseUrl),
   alternates: {
     canonical: "/",
   },
   openGraph: {
-    title: "Parking PWA - Sistema de Estacionamiento",
-    description: "Sistema completo de gestión de estacionamiento. ¡Instala la app para acceso rápido!",
-    url: process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000",
-    siteName: "Parking PWA",
+    title: APP_CONFIG.app.name,
+    description: APP_CONFIG.app.description,
+    url: baseUrl,
+    siteName: APP_CONFIG.app.shortName,
     locale: "es_ES",
     type: "website",
+    images: [
+      {
+        url: logoSrc,
+        width: 512,
+        height: 512,
+        alt: APP_CONFIG.logo.alt,
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Parking PWA - Sistema de Estacionamiento",
-    description: "Sistema completo de gestión de estacionamiento. ¡Instala la app para acceso rápido!",
+    title: APP_CONFIG.app.name,
+    description: APP_CONFIG.app.description,
+    images: [logoSrc],
   },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Parking PWA",
+    title: APP_CONFIG.app.shortName,
     startupImage: [
       {
-        url: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 390 844'%3E%3Crect width='390' height='844' fill='%233b82f6'/%3E%3Ctext x='195' y='422' fontFamily='Arial' fontSize='48' fill='white' textAnchor='middle'%3EParking PWA%3C/text%3E%3C/svg%3E",
+        url: logoSrc,
         media: "(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)",
       },
     ],
   },
-  applicationName: "Parking PWA",
+  applicationName: APP_CONFIG.app.shortName,
   referrer: "origin-when-cross-origin",
   category: "business",
   classification: "Business Application",
@@ -68,16 +80,16 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       {
-        url: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%233b82f6'/%3E%3Ctext x='50' y='55' fontFamily='Arial' fontSize='40' fill='white' textAnchor='middle'%3EP%3C/text%3E%3C/svg%3E",
+        url: logoSrc,
         sizes: "any",
-        type: "image/svg+xml",
+        type: logoSrc.startsWith("data:") ? "image/svg+xml" : "image/png",
       },
     ],
     apple: [
       {
-        url: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%233b82f6'/%3E%3Ctext x='50' y='55' fontFamily='Arial' fontSize='40' fill='white' textAnchor='middle'%3EP%3C/text%3E%3C/svg%3E",
+        url: logoSrc,
         sizes: "180x180",
-        type: "image/svg+xml",
+        type: logoSrc.startsWith("data:") ? "image/svg+xml" : "image/png",
       },
     ],
   },
@@ -85,7 +97,7 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#3b82f6" },
+    { media: "(prefers-color-scheme: light)", color: APP_CONFIG.app.themeColor },
     { media: "(prefers-color-scheme: dark)", color: "#1e40af" },
   ],
   width: "device-width",
@@ -104,47 +116,37 @@ export default function RootLayout({
     <html lang="es" suppressHydrationWarning>
       <head>
         {/* PWA Meta Tags */}
-        <meta name="application-name" content="Parking PWA" />
+        <meta name="application-name" content={APP_CONFIG.app.shortName} />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="Parking PWA" />
+        <meta name="apple-mobile-web-app-title" content={APP_CONFIG.app.shortName} />
         <meta name="format-detection" content="telephone=no" />
         <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="msapplication-TileColor" content="#3b82f6" />
+        <meta name="msapplication-TileColor" content={APP_CONFIG.app.themeColor} />
         <meta name="msapplication-tap-highlight" content="no" />
 
-        {/* Apple Touch Icon usando SVG inline */}
-        <link
-          rel="apple-touch-icon"
-          href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%233b82f6'/%3E%3Ctext x='50' y='55' fontFamily='Arial' fontSize='40' fill='white' textAnchor='middle'%3EP%3C/text%3E%3C/svg%3E"
-        />
-
-        {/* Favicon usando SVG inline */}
-        <link
-          rel="icon"
-          type="image/svg+xml"
-          href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%233b82f6'/%3E%3Ctext x='50' y='55' fontFamily='Arial' fontSize='40' fill='white' textAnchor='middle'%3EP%3C/text%3E%3C/svg%3E"
-        />
+        {/* Favicon y Apple Touch Icon */}
+        <link rel="apple-touch-icon" href={logoSrc} />
+        <link rel="icon" type={logoSrc.startsWith("data:") ? "image/svg+xml" : "image/png"} href={logoSrc} />
 
         {/* Service Worker Registration */}
         <script
-            dangerouslySetInnerHTML={{
-              __html: `
-                window.addEventListener('load', () => {
-                  if ('serviceWorker' in navigator) {
-                    const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
-                    if (isProduction) {
-                      navigator.serviceWorker.register('/sw.js')
-                        .then((registration) => console.log('✅ SW registrado:', registration.scope))
-                        .catch((error) => console.log('❌ SW falló:', error));
-                    } else {
-                      console.log('⚠️ Service Worker desactivado en desarrollo');
-                    }
-                  }
+          dangerouslySetInnerHTML={{
+            __html: `
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js')
+                    .then(function(registration) {
+                      console.log('✅ SW registrado:', registration.scope);
+                    })
+                    .catch(function(error) {
+                      console.log('❌ SW falló:', error);
+                    });
                 });
-              `,
-            }}
-          />
+              }
+            `,
+          }}
+        />
       </head>
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
