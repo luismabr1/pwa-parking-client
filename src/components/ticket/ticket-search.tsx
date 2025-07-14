@@ -36,13 +36,11 @@ export default function TicketSearch() {
       const cleanTicketCode = code.trim().toUpperCase()
       console.log(`🔍 Búsqueda: Verificando ticket ${cleanTicketCode}`)
 
-      // Usar directamente la ruta del ticket para verificar si existe
       const response = await fetch(`/api/ticket/${cleanTicketCode}`)
 
       if (response.ok) {
         const ticket = await response.json()
         console.log(`✅ Búsqueda: Ticket encontrado, redirigiendo a: /ticket/${ticket.codigoTicket}`)
-        // Redirigir a la página de detalles del ticket
         router.push(`/ticket/${ticket.codigoTicket}`)
       } else {
         const errorData = await response.json()
@@ -61,7 +59,6 @@ export default function TicketSearch() {
     console.log("QR Code scanned:", scannedCode)
     setTicketCode(scannedCode)
     setShowQRScanner(false)
-    // Automatically search for the scanned ticket
     searchTicket(scannedCode)
   }
 
@@ -70,15 +67,15 @@ export default function TicketSearch() {
   }
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader className="text-center">
-        <CardTitle className="text-2xl font-bold">Buscar Ticket</CardTitle>
-        <p className="text-gray-600">Ingresa tu código de ticket o escanea el código QR</p>
+    <Card className="w-full shadow-lg border-0 bg-card">
+      <CardHeader className="text-center pb-4">
+        <CardTitle className="text-xl font-bold text-foreground">Buscar Ticket</CardTitle>
+        <p className="text-muted-foreground text-sm">Ingresa tu código de ticket o escanea el código QR</p>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-6">
         <form onSubmit={handleSearch} className="space-y-4">
           <div className="space-y-2">
-            <label htmlFor="ticketCode" className="text-sm font-medium">
+            <label htmlFor="ticketCode" className="text-sm font-medium text-foreground">
               Código de Ticket
             </label>
             <Input
@@ -87,30 +84,34 @@ export default function TicketSearch() {
               placeholder="Ej. PARK001, TEST001"
               value={ticketCode}
               onChange={(e) => setTicketCode(e.target.value)}
-              className="text-center text-lg font-mono"
+              className="text-center text-lg font-mono h-12 shadow-sm"
               disabled={isLoading}
             />
           </div>
 
           {error && (
-            <Alert variant="destructive">
+            <Alert variant="destructive" className="border-destructive/20 bg-destructive/10">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
+              <AlertDescription className="text-destructive">{error}</AlertDescription>
             </Alert>
           )}
 
-          <div className="space-y-2">
-            <Button type="submit" className="w-full h-12 text-lg" disabled={isLoading || !ticketCode.trim()}>
+          <div className="space-y-3">
+            <Button
+              type="submit"
+              className="w-full h-12 text-base font-medium shadow-lg hover:shadow-xl transition-all duration-200"
+              disabled={isLoading || !ticketCode.trim()}
+            >
               <Search className="mr-2 h-5 w-5" />
               {isLoading ? "Buscando..." : "Buscar Ticket"}
             </Button>
 
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
+                <span className="w-full border-t border-border" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">O</span>
+                <span className="bg-card px-2 text-muted-foreground font-medium">O</span>
               </div>
             </div>
 
@@ -118,7 +119,7 @@ export default function TicketSearch() {
               type="button"
               onClick={() => setShowQRScanner(true)}
               variant="outline"
-              className="w-full h-12 text-lg"
+              className="w-full h-12 text-base font-medium shadow-sm hover:shadow-md transition-all duration-200"
               disabled={isLoading}
             >
               <QrCode className="mr-2 h-5 w-5" />
