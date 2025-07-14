@@ -11,6 +11,43 @@ interface PushNotificationState {
   permissionState: NotificationPermission
 }
 
+// Agregar función para detectar modo incógnito al inicio del archivo, después de los imports
+function detectIncognitoMode(): Promise<boolean> {
+  return new Promise((resolve) => {
+    // Método 1: Verificar si localStorage está disponible pero limitado
+    try {
+      if ("webkitRequestFileSystem" in window) {
+        // Chrome/Webkit
+        ;(window as any).webkitRequestFileSystem(
+          (window as any).TEMPORARY,
+          1,
+          () => resolve(false), // No incógnito
+          () => resolve(true), // Incógnito
+        )
+      } else if ("MozAppearance" in document.documentElement.style) {
+        // Firefox
+        const db = indexedDB.open("test")
+        db.onerror = () => resolve(true) // Incógnito
+        db.onsuccess = () => resolve(false) // No incógnito
+      } else {
+        // Fallback: verificar storage quota
+        if ("storage" in navigator && "estimate" in navigator.storage) {
+          navigator.storage
+            .estimate()
+            .then((estimate) => {
+              resolve(estimate.quota && estimate.quota < 120000000) // < 120MB indica incógnito
+            })
+            .catch(() => resolve(false))
+        } else {
+          resolve(false)
+        }
+      }
+    } catch (e) {
+      resolve(false)
+    }
+  })
+}
+
 export function usePushNotifications() {
   const [state, setState] = useState<PushNotificationState>({
     isSupported: false,
@@ -90,6 +127,20 @@ export function usePushNotifications() {
     setState((prev) => ({ ...prev, isLoading: true, error: null }))
 
     try {
+      // Detectar modo incógnito antes de proceder
+      console.log("🕵️ [USE-PUSH-NOTIFICATIONS] Verificando modo incógnito...")
+      const isIncognito = await detectIncognitoMode()
+
+      if (isIncognito) {
+        console.log("🕵️ [USE-PUSH-NOTIFICATIONS] Modo incógnito detectado")
+        setState((prev) => ({
+          ...prev,
+          isLoading: false,
+          error: "INCOGNITO_MODE_ERROR",
+        }))
+        return false
+      }
+
       console.log("🔐 [USE-PUSH-NOTIFICATIONS] Solicitando permisos de notificación...")
       console.log("   Estado actual:", Notification.permission)
 
@@ -187,10 +238,19 @@ export function usePushNotifications() {
       console.error("❌ [USE-PUSH-NOTIFICATIONS] Error en suscripción:", error)
 
       let errorMessage = "Error al activar notificaciones"
+      let errorType = "GENERIC_ERROR"
+
       if (error instanceof Error) {
-        if (error.message.includes("VAPID")) {
+        // Detectar error específico de modo incógnito
+        if (error.name === "AbortError" && error.message.includes("permission denied")) {
+          console.log("🕵️ [USE-PUSH-NOTIFICATIONS] Error de modo incógnito detectado por AbortError")
+          errorType = "INCOGNITO_MODE_ERROR"
+          errorMessage = "INCOGNITO_MODE_ERROR"
+        } else if (error.message.includes("VAPID")) {
+          errorType = "VAPID_ERROR"
           errorMessage = "Error de configuración del servidor. Contacta al administrador."
         } else if (error.message.includes("denied")) {
+          errorType = "PERMISSION_ERROR"
           errorMessage = "Permisos denegados. Verifica la configuración de notificaciones en tu navegador."
         } else {
           errorMessage = error.message

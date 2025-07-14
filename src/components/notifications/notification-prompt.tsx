@@ -36,13 +36,57 @@ export default function NotificationPrompt({
           onSkip() // Cerrar el prompt después del éxito
         }, 2000)
       } else {
-        setError("No se pudieron activar las notificaciones. Inténtalo de nuevo.")
+        // Verificar si el error es por modo incógnito
+        const isIncognito = await detectIncognitoMode()
+        if (isIncognito) {
+          setError(
+            "🕵️ Las notificaciones no están disponibles en modo incógnito. Abre la app en una ventana normal para activarlas.",
+          )
+        } else {
+          setError("No se pudieron activar las notificaciones. Inténtalo de nuevo.")
+        }
       }
     } catch (err) {
-      setError("Error activando las notificaciones")
+      if (err instanceof Error && err.message === "INCOGNITO_MODE_ERROR") {
+        setError("🕵️ Modo incógnito detectado. Las notificaciones no están disponibles por limitaciones del navegador.")
+      } else {
+        setError("Error activando las notificaciones")
+      }
     } finally {
       setIsEnabling(false)
     }
+  }
+
+  async function detectIncognitoMode(): Promise<boolean> {
+    return new Promise((resolve) => {
+      try {
+        if ("webkitRequestFileSystem" in window) {
+          ;(window as any).webkitRequestFileSystem(
+            (window as any).TEMPORARY,
+            1,
+            () => resolve(false),
+            () => resolve(true),
+          )
+        } else if ("MozAppearance" in document.documentElement.style) {
+          const db = indexedDB.open("test")
+          db.onerror = () => resolve(true)
+          db.onsuccess = () => resolve(false)
+        } else {
+          if ("storage" in navigator && "estimate" in navigator.storage) {
+            navigator.storage
+              .estimate()
+              .then((estimate) => {
+                resolve(estimate.quota && estimate.quota < 120000000)
+              })
+              .catch(() => resolve(false))
+          } else {
+            resolve(false)
+          }
+        }
+      } catch (e) {
+        resolve(false)
+      }
+    })
   }
 
   if (success) {

@@ -161,24 +161,98 @@ export default function NotificationSettings({
         </CardHeader>
         <CardContent className="space-y-4">
           {error && (
-            <Alert variant={permissionState === "denied" ? "destructive" : "default"}>
+            <Alert
+              variant={permissionState === "denied" || error === "INCOGNITO_MODE_ERROR" ? "destructive" : "default"}
+            >
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription className="whitespace-pre-line">
-                {error}
-                {permissionState === "denied" && (
-                  <div className="mt-3 flex gap-2">
-                    <Button onClick={openBrowserSettings} variant="outline" size="sm">
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      Abrir Configuración
-                    </Button>
-                    <Button onClick={handleResetSubscription} variant="outline" size="sm">
-                      <RefreshCw className="h-4 w-4 mr-2" />
-                      Reintentar
-                    </Button>
+              <AlertDescription>
+                {error === "INCOGNITO_MODE_ERROR" ? (
+                  <div className="space-y-4">
+                    <div>
+                      <strong>🕵️ Modo Incógnito Detectado</strong>
+                    </div>
+                    <p className="text-sm">
+                      Las notificaciones push no están disponibles en modo incógnito por limitaciones de seguridad del
+                      navegador.
+                    </p>
+                    <div className="bg-blue-50 dark:bg-blue-950/30 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
+                      <p className="text-sm text-blue-800 dark:text-blue-200 font-medium mb-2">
+                        💡 Para usar notificaciones:
+                      </p>
+                      <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
+                        <li>• Abre la aplicación en una ventana normal (no incógnito)</li>
+                        <li>• O instala la PWA desde el menú del navegador</li>
+                        <li>• Las notificaciones funcionarán normalmente</li>
+                      </ul>
+                    </div>
+                    {/* Botones mejorados con mejor layout */}
+                    <div className="flex flex-col sm:flex-row gap-2 pt-2">
+                      <Button
+                        onClick={() => window.open(window.location.href, "_blank")}
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 min-w-0"
+                      >
+                        <ExternalLink className="h-4 w-4 mr-2 flex-shrink-0" />
+                        <span className="truncate">Abrir en Ventana Normal</span>
+                      </Button>
+                      <Button
+                        onClick={handleResetSubscription}
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 min-w-0 bg-transparent"
+                      >
+                        <RefreshCw className="h-4 w-4 mr-2 flex-shrink-0" />
+                        <span className="truncate">Reintentar</span>
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="whitespace-pre-line">{error}</div>
+                    {permissionState === "denied" && (
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <Button
+                          onClick={openBrowserSettings}
+                          variant="outline"
+                          size="sm"
+                          className="flex-1 bg-transparent"
+                        >
+                          <ExternalLink className="h-4 w-4 mr-2" />
+                          Abrir Configuración
+                        </Button>
+                        <Button
+                          onClick={handleResetSubscription}
+                          variant="outline"
+                          size="sm"
+                          className="flex-1 bg-transparent"
+                        >
+                          <RefreshCw className="h-4 w-4 mr-2" />
+                          Reintentar
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 )}
               </AlertDescription>
             </Alert>
+          )}
+
+          {!error && typeof window !== "undefined" && (
+            <div className="hidden" id="incognito-warning">
+              <Alert>
+                <Info className="h-4 w-4" />
+                <AlertDescription>
+                  <div className="space-y-2">
+                    <p className="font-medium">🕵️ Navegación Privada Detectada</p>
+                    <p className="text-sm">
+                      Las notificaciones push pueden no funcionar correctamente en modo incógnito. Para la mejor
+                      experiencia, usa una ventana normal del navegador.
+                    </p>
+                  </div>
+                </AlertDescription>
+              </Alert>
+            </div>
           )}
 
           {testNotificationSent && (
@@ -241,40 +315,48 @@ export default function NotificationSettings({
 
             {isSubscribed && (
               <div className="pt-2 border-t space-y-2">
-                <Button
-                  onClick={handleTestNotification}
-                  variant="outline"
-                  size="sm"
-                  disabled={testNotificationSent || isTestingNotification}
-                >
-                  {isTestingNotification ? (
-                    <>
-                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                      Enviando...
-                    </>
-                  ) : testNotificationSent ? (
-                    <>
-                      <CheckCircle2 className="h-4 w-4 mr-2" />
-                      Enviada
-                    </>
-                  ) : (
-                    <>
-                      <Bell className="h-4 w-4 mr-2" />
-                      Probar Notificación
-                    </>
-                  )}
-                </Button>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Button
+                    onClick={handleTestNotification}
+                    variant="outline"
+                    size="sm"
+                    disabled={testNotificationSent || isTestingNotification}
+                    className="flex-1 bg-transparent"
+                  >
+                    {isTestingNotification ? (
+                      <>
+                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                        Enviando...
+                      </>
+                    ) : testNotificationSent ? (
+                      <>
+                        <CheckCircle2 className="h-4 w-4 mr-2" />
+                        Enviada
+                      </>
+                    ) : (
+                      <>
+                        <Bell className="h-4 w-4 mr-2" />
+                        Probar Notificación
+                      </>
+                    )}
+                  </Button>
 
-                <Button onClick={handleResetSubscription} variant="outline" size="sm">
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Reiniciar Suscripción
-                </Button>
+                  <Button
+                    onClick={handleResetSubscription}
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 bg-transparent"
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Reiniciar Suscripción
+                  </Button>
+                </div>
               </div>
             )}
 
             {installPrompt && (
               <div className="pt-2 border-t">
-                <Button onClick={installPrompt} variant="outline" size="sm">
+                <Button onClick={installPrompt} variant="outline" size="sm" className="w-full bg-transparent">
                   <Download className="h-4 w-4 mr-2" />
                   Instalar Aplicación
                 </Button>

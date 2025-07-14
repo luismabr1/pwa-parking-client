@@ -3,63 +3,358 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sin Conexión - Sistema de Estacionamiento</title>
+    <title>Sin Conexión - Parking PWA</title>
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        /* Reset básico */
+        * {
             margin: 0;
-            padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Variables CSS para temas */
+        :root {
+            --background: 0 0% 100%;
+            --foreground: 0 0% 9%;
+            --card: 0 0% 100%;
+            --card-foreground: 0 0% 9%;
+            --primary: 0 0% 9%;
+            --primary-foreground: 0 0% 98%;
+            --secondary: 0 0% 96%;
+            --secondary-foreground: 0 0% 9%;
+            --muted: 0 0% 96%;
+            --muted-foreground: 0 0% 45%;
+            --border: 0 0% 90%;
+            --ring: 0 0% 9%;
+            --radius: 0.5rem;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --background: 0 0% 9%;
+                --foreground: 0 0% 98%;
+                --card: 0 0% 9%;
+                --card-foreground: 0 0% 98%;
+                --primary: 0 0% 98%;
+                --primary-foreground: 0 0% 9%;
+                --secondary: 0 0% 14%;
+                --secondary-foreground: 0 0% 98%;
+                --muted: 0 0% 14%;
+                --muted-foreground: 0 0% 64%;
+                --border: 0 0% 14%;
+                --ring: 0 0% 83%;
+            }
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: hsl(var(--background));
+            color: hsl(var(--foreground));
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
-        }
-        .container {
-            text-align: center;
-            max-width: 400px;
-            padding: 40px 20px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            backdrop-filter: blur(10px);
-        }
-        .icon {
-            font-size: 64px;
-            margin-bottom: 20px;
-        }
-        h1 {
-            margin: 0 0 10px 0;
-            font-size: 24px;
-        }
-        p {
-            margin: 0 0 30px 0;
-            opacity: 0.8;
+            padding: 1rem;
             line-height: 1.5;
         }
-        .retry-btn {
-            background: #3b82f6;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: background 0.3s;
+
+        .container {
+            width: 100%;
+            max-width: 28rem;
+            margin: 0 auto;
         }
-        .retry-btn:hover {
-            background: #2563eb;
+
+        .card {
+            background-color: hsl(var(--card));
+            color: hsl(var(--card-foreground));
+            border: 1px solid hsl(var(--border));
+            border-radius: calc(var(--radius) + 2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 1.5rem;
+            text-align: center;
+            border-bottom: 1px solid hsl(var(--border));
+        }
+
+        .card-content {
+            padding: 1.5rem;
+            text-align: center;
+            space-y: 1rem;
+        }
+
+        .logo {
+            width: 4rem;
+            height: 4rem;
+            background-color: hsl(var(--primary));
+            color: hsl(var(--primary-foreground));
+            border-radius: calc(var(--radius) + 2px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin: 0 auto 1rem auto;
+            box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .title {
+            font-size: 1.875rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            color: hsl(var(--foreground));
+        }
+
+        .subtitle {
+            color: hsl(var(--muted-foreground));
+            margin-bottom: 1.5rem;
+        }
+
+        .offline-icon {
+            width: 4rem;
+            height: 4rem;
+            margin: 0 auto 1.5rem auto;
+            opacity: 0.6;
+        }
+
+        .offline-icon svg {
+            width: 100%;
+            height: 100%;
+            stroke: hsl(var(--muted-foreground));
+            fill: none;
+            stroke-width: 1.5;
+        }
+
+        .message {
+            color: hsl(var(--muted-foreground));
+            margin-bottom: 2rem;
+            font-size: 1rem;
+        }
+
+        .button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            white-space: nowrap;
+            border-radius: var(--radius);
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            background-color: hsl(var(--primary));
+            color: hsl(var(--primary-foreground));
+            border: none;
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            min-width: 8rem;
+            text-decoration: none;
+        }
+
+        .button:hover {
+            background-color: hsl(var(--primary) / 0.9);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px -2px rgba(0, 0, 0, 0.1);
+        }
+
+        .button:active {
+            transform: translateY(0);
+        }
+
+        .button-icon {
+            width: 1rem;
+            height: 1rem;
+            margin-right: 0.5rem;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background-color: hsl(var(--secondary));
+            color: hsl(var(--secondary-foreground));
+            margin-bottom: 1rem;
+        }
+
+        .status-dot {
+            width: 0.5rem;
+            height: 0.5rem;
+            border-radius: 50%;
+            background-color: #ef4444;
+            margin-right: 0.5rem;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .features-list {
+            background-color: hsl(var(--muted));
+            border-radius: var(--radius);
+            padding: 1rem;
+            margin-top: 1.5rem;
+            text-align: left;
+        }
+
+        .features-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: hsl(var(--foreground));
+            font-size: 0.875rem;
+        }
+
+        .features-list ul {
+            list-style: none;
+            font-size: 0.875rem;
+            color: hsl(var(--muted-foreground));
+        }
+
+        .features-list li {
+            margin-bottom: 0.25rem;
+        }
+
+        .features-list li::before {
+            content: "•";
+            color: hsl(var(--primary));
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .container {
+                padding: 0.5rem;
+            }
+            
+            .card-header,
+            .card-content {
+                padding: 1rem;
+            }
+            
+            .title {
+                font-size: 1.5rem;
+            }
+        }
+
+        /* Animaciones */
+        .card {
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(1rem);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* PWA específico */
+        @media (display-mode: standalone) {
+            body {
+                padding-top: env(safe-area-inset-top);
+                padding-bottom: env(safe-area-inset-bottom);
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="icon">📱</div>
-        <h1>Sin Conexión</h1>
-        <p>No tienes conexión a internet. Algunas funciones pueden no estar disponibles.</p>
-        <button class="retry-btn" onclick="window.location.reload()">
-            Reintentar
-        </button>
+        <div class="card">
+            <div class="card-header">
+                <!-- Logo usando el mismo estilo que la app -->
+                <div class="logo">P</div>
+                <h1 class="title">Sistema de Estacionamiento</h1>
+                <p class="subtitle">Parking PWA</p>
+            </div>
+            
+            <div class="card-content">
+                <!-- Badge de estado -->
+                <div class="status-badge">
+                    <div class="status-dot"></div>
+                    Sin Conexión
+                </div>
+
+                <!-- Icono de offline -->
+                <div class="offline-icon">
+                    <svg viewBox="0 0 24 24" stroke="currentColor" fill="none">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 5.636l-12.728 12.728m0 0L12 12m-6.364 6.364L12 12m6.364-6.364L12 12"/>
+                        <circle cx="12" cy="12" r="10"/>
+                    </svg>
+                </div>
+
+                <!-- Mensaje principal -->
+                <p class="message">
+                    No hay conexión a internet en este momento. Algunas funciones pueden no estar disponibles.
+                </p>
+
+                <!-- Botón de reintentar -->
+                <button class="button" onclick="window.location.reload()">
+                    <svg class="button-icon" viewBox="0 0 24 24" stroke="currentColor" fill="none">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                    Reintentar
+                </button>
+
+                <!-- Información de funciones disponibles offline -->
+                <div class="features-list">
+                    <div class="features-title">Funciones disponibles sin conexión:</div>
+                    <ul>
+                        <li>Visualizar información guardada</li>
+                        <li>Acceder a tickets recientes</li>
+                        <li>Consultar historial local</li>
+                        <li>Configuración básica</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <script>
+        // Auto-retry cada 30 segundos
+        let retryCount = 0;
+        const maxRetries = 10;
+
+        function checkConnection() {
+            if (navigator.onLine) {
+                window.location.reload();
+            } else {
+                retryCount++;
+                if (retryCount < maxRetries) {
+                    setTimeout(checkConnection, 30000); // 30 segundos
+                }
+            }
+        }
+
+        // Iniciar verificación automática
+        setTimeout(checkConnection, 30000);
+
+        // Escuchar eventos de conexión
+        window.addEventListener('online', function() {
+            console.log('🌐 Conexión restaurada, recargando...');
+            window.location.reload();
+        });
+
+        window.addEventListener('offline', function() {
+            console.log('📵 Conexión perdida');
+        });
+
+        // Mostrar estado de conexión en consola
+        console.log('📱 Parking PWA - Modo Offline');
+        console.log('🔄 Verificación automática cada 30 segundos');
+        console.log('📶 Estado de conexión:', navigator.onLine ? 'Online' : 'Offline');
+    </script>
 </body>
 </html>
