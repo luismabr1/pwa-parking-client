@@ -5,7 +5,7 @@ export const APP_CONFIG = {
     // Puedes cambiar esta ruta por tu logo personalizado
     // Formatos soportados: SVG, PNG, JPG
     // Recomendado: SVG para mejor escalabilidad
-    src: "/logo.png", // Cambia esta ruta por tu logo
+    src: "https://res.cloudinary.com/dezs0sktt/image/upload/v1752610317/parking-plates/z9euot4qapf5yi556wka.png", // Cambia esta ruta por tu logo
     alt: "Parking PWA Logo",
     fallbackText: "P", // Texto que se muestra si no hay logo
   },
