@@ -50,7 +50,7 @@ export async function GET(request: Request, { params }: { params: { code: string
     const tasaCambio = settings?.tarifas?.tasaCambio || 35.0;
 
     // Determinar la hora de entrada y calcular el monto
-    if (ticket.estado === "estacionado_confirmado" && ticket.horaOcupacion) {
+    if (ticket.estado === "validado" && ticket.horaOcupacion) {
       horaEntrada = new Date(ticket.horaOcupacion);
       const now = new Date();
       const diffInMs = now.getTime() - horaEntrada.getTime();
