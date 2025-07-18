@@ -290,70 +290,74 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
 
   if (success) {
     return (
-      <Card className="w-full">
-        <CardContent className="pt-6 text-center">
-          <CheckCircle2 className="mx-auto h-16 w-16 text-green-500 mb-4" />
-          <h2 className="text-2xl font-bold mb-2">¡Pago Registrado!</h2>
-          <p className="text-lg text-gray-600 mb-4">
-            {paymentType?.startsWith("efectivo")
-              ? "Su solicitud de pago en efectivo ha sido registrada. Diríjase a la taquilla para completar el pago."
-              : "El pago ha sido registrado y está Pendiente de Validación por el personal del estacionamiento."}
-          </p>
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardContent className="pt-6 text-center">
+            <CheckCircle2 className="mx-auto h-16 w-16 text-green-500 mb-4" />
+            <h2 className="text-2xl font-bold mb-2">¡Pago Registrado!</h2>
+            <p className="text-lg text-muted-foreground mb-4">
+              {paymentType?.startsWith("efectivo")
+                ? "Su solicitud de pago en efectivo ha sido registrada. Diríjase a la taquilla para completar el pago."
+                : "El pago ha sido registrado y está Pendiente de Validación por el personal del estacionamiento."}
+            </p>
 
-          {/* Mostrar estado de notificaciones */}
-          {ticketNotificationsRegistered && (
-            <div className="bg-green-50 p-4 rounded-lg mb-4">
-              <div className="flex items-center justify-center space-x-2 text-green-800">
-                <Bell className="h-5 w-5" />
-                <span className="font-medium">Notificaciones activadas para este ticket</span>
+            {/* Mostrar estado de notificaciones */}
+            {ticketNotificationsRegistered && (
+              <div className="bg-green-50 dark:bg-green-950/20 p-4 rounded-lg mb-4 border border-green-200 dark:border-green-800/30">
+                <div className="flex items-center justify-center space-x-2 text-green-800 dark:text-green-200">
+                  <Bell className="h-5 w-5" />
+                  <span className="font-medium">Notificaciones activadas para este ticket</span>
+                </div>
+                <p className="text-sm text-green-600 dark:text-green-300 mt-1">
+                  Te notificaremos cuando tu pago sea validado
+                </p>
               </div>
-              <p className="text-sm text-green-600 mt-1">Te notificaremos cuando tu pago sea validado</p>
-            </div>
-          )}
+            )}
 
-          {formData.tiempoSalida && formData.tiempoSalida !== "now" && (
-            <div className="bg-blue-50 p-4 rounded-lg mb-4">
-              <div className="flex items-center justify-center space-x-2 text-blue-800">
-                <Clock className="h-5 w-5" />
-                <span className="font-medium">
-                  Tiempo de salida programado: {getExitTimeLabel(formData.tiempoSalida)}
-                </span>
+            {formData.tiempoSalida && formData.tiempoSalida !== "now" && (
+              <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg mb-4 border border-blue-200 dark:border-blue-800/30">
+                <div className="flex items-center justify-center space-x-2 text-blue-800 dark:text-blue-200">
+                  <Clock className="h-5 w-5" />
+                  <span className="font-medium">
+                    Tiempo de salida programado: {getExitTimeLabel(formData.tiempoSalida)}
+                  </span>
+                </div>
+                <p className="text-sm text-blue-600 dark:text-blue-300 mt-1">
+                  Salida estimada:{" "}
+                  {getExitDateTime(formData.tiempoSalida).toLocaleTimeString("es-VE", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </p>
               </div>
-              <p className="text-sm text-blue-600 mt-1">
-                Salida estimada:{" "}
-                {getExitDateTime(formData.tiempoSalida).toLocaleTimeString("es-VE", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </p>
-            </div>
-          )}
-          <Button onClick={() => router.push("/")} className="w-full h-12 text-lg">
-            Volver al Inicio
-          </Button>
-        </CardContent>
-      </Card>
+            )}
+            <Button onClick={() => router.push("/")} className="w-full h-12 text-lg">
+              Volver al Inicio
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
     )
   }
 
   const isLoaded = !loadingSettings && !loadingBanks
 
   return (
-    <>
-      <Card className="w-full">
+    <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-4">
+      <Card className="w-full max-w-md">
         <CardContent className="pt-6">
           <div className="mb-6">
             <div className="flex justify-between mb-2">
-              <div className={`h-2 flex-1 rounded-l-full ${currentStep >= 1 ? "bg-primary" : "bg-gray-200"}`}></div>
-              <div className={`h-2 flex-1 ${currentStep >= 2 ? "bg-primary" : "bg-gray-200"}`}></div>
-              <div className={`h-2 flex-1 ${currentStep >= 3 ? "bg-primary" : "bg-gray-200"}`}></div>
-              <div className={`h-2 flex-1 rounded-r-full ${currentStep >= 4 ? "bg-primary" : "bg-gray-200"}`}></div>
+              <div className={`h-2 flex-1 rounded-l-full ${currentStep >= 1 ? "bg-primary" : "bg-muted"}`}></div>
+              <div className={`h-2 flex-1 ${currentStep >= 2 ? "bg-primary" : "bg-muted"}`}></div>
+              <div className={`h-2 flex-1 ${currentStep >= 3 ? "bg-primary" : "bg-muted"}`}></div>
+              <div className={`h-2 flex-1 rounded-r-full ${currentStep >= 4 ? "bg-primary" : "bg-muted"}`}></div>
             </div>
-            <p className="text-center text-sm text-gray-500">Paso {currentStep} de 4</p>
+            <p className="text-center text-sm text-muted-foreground">Paso {currentStep} de 4</p>
           </div>
 
           {error && (
-            <Alert className="mb-4">
+            <Alert className="mb-4" variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>{error}</AlertDescription>
             </Alert>
@@ -366,13 +370,15 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                 <h2 className="text-xl font-bold mb-4">Seleccione Método de Pago</h2>
                 <div className="space-y-4">
                   <div>
-                    <p className="text-sm text-gray-500">Código de Ticket</p>
+                    <p className="text-sm text-muted-foreground">Código de Ticket</p>
                     <p className="text-lg font-medium">{ticket.codigoTicket}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Monto a Pagar</p>
+                    <p className="text-sm text-muted-foreground">Monto a Pagar</p>
                     <p className="text-2xl font-bold text-primary">{formatCurrency(ticket.montoCalculado)}</p>
-                    {ticket.montoBs && <p className="text-lg text-gray-600">{formatCurrency(ticket.montoBs, "VES")}</p>}
+                    {ticket.montoBs && (
+                      <p className="text-lg text-muted-foreground">{formatCurrency(ticket.montoBs, "VES")}</p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -484,14 +490,18 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                 <h2 className="text-xl font-bold mb-4">Información de Pago</h2>
                 <div className="space-y-4">
                   <div>
-                    <p className="text-sm text-gray-500">Código de Ticket</p>
+                    <p className="text-sm text-muted-foreground">Código de Ticket</p>
                     <p className="text-lg font-medium">{ticket.codigoTicket}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Monto a Pagar</p>
-                    <div className="text-center p-4 bg-green-50 rounded-lg">
-                      <p className="text-2xl font-bold text-green-600">{formatCurrency(montoBs, "VES")}</p>
-                      <p className="text-lg font-medium text-green-500">{formatCurrency(ticket.montoCalculado)}</p>
+                    <p className="text-sm text-muted-foreground">Monto a Pagar</p>
+                    <div className="text-center p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800/30">
+                      <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                        {formatCurrency(montoBs, "VES")}
+                      </p>
+                      <p className="text-lg font-medium text-green-500 dark:text-green-300">
+                        {formatCurrency(ticket.montoCalculado)}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -499,10 +509,10 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
 
               {!isLoaded ? (
                 <div className="flex justify-center py-4">
-                  <RefreshCw className="h-6 w-6 animate-spin text-gray-400" />
+                  <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
                 </div>
               ) : (
-                <div className="space-y-4 bg-gray-50 p-4 rounded-lg">
+                <div className="space-y-4 bg-muted/50 p-4 rounded-lg border">
                   <h3 className="font-semibold text-center">Datos para realizar el pago</h3>
 
                   {companySettings && paymentType && (
@@ -513,22 +523,22 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                           companySettings.pagoMovil.cedula ||
                           companySettings.pagoMovil.telefono) && (
                           <div className="space-y-2">
-                            <h4 className="font-medium text-sm text-gray-700">Pago Móvil</h4>
+                            <h4 className="font-medium text-sm text-foreground">Pago Móvil</h4>
                             {companySettings.pagoMovil.banco && (
                               <div className="flex justify-between">
-                                <span className="text-sm text-gray-500">Banco:</span>
+                                <span className="text-sm text-muted-foreground">Banco:</span>
                                 <span className="text-sm font-medium">{companySettings.pagoMovil.banco}</span>
                               </div>
                             )}
                             {companySettings.pagoMovil.cedula && (
                               <div className="flex justify-between">
-                                <span className="text-sm text-gray-500">Cédula/RIF:</span>
+                                <span className="text-sm text-muted-foreground">Cédula/RIF:</span>
                                 <span className="text-sm font-medium">{companySettings.pagoMovil.cedula}</span>
                               </div>
                             )}
                             {companySettings.pagoMovil.telefono && (
                               <div className="flex justify-between">
-                                <span className="text-sm text-gray-500">Teléfono:</span>
+                                <span className="text-sm text-muted-foreground">Teléfono:</span>
                                 <span className="text-sm font-medium">{companySettings.pagoMovil.telefono}</span>
                               </div>
                             )}
@@ -542,22 +552,22 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                           companySettings.transferencia.telefono ||
                           companySettings.transferencia.numeroCuenta) && (
                           <div className="space-y-2">
-                            <h4 className="font-medium text-sm text-gray-700">Transferencia Bancaria</h4>
+                            <h4 className="font-medium text-sm text-foreground">Transferencia Bancaria</h4>
                             {companySettings.transferencia.banco && (
                               <div className="flex justify-between">
-                                <span className="text-sm text-gray-500">Banco:</span>
+                                <span className="text-sm text-muted-foreground">Banco:</span>
                                 <span className="text-sm font-medium">{companySettings.transferencia.banco}</span>
                               </div>
                             )}
                             {companySettings.transferencia.cedula && (
                               <div className="flex justify-between">
-                                <span className="text-sm text-gray-500">Cédula/RIF:</span>
+                                <span className="text-sm text-muted-foreground">Cédula/RIF:</span>
                                 <span className="text-sm font-medium">{companySettings.transferencia.cedula}</span>
                               </div>
                             )}
                             {companySettings.transferencia.numeroCuenta && (
                               <div className="flex justify-between">
-                                <span className="text-sm text-gray-500">Número de Cuenta:</span>
+                                <span className="text-sm text-muted-foreground">Número de Cuenta:</span>
                                 <span className="text-sm font-medium">
                                   {companySettings.transferencia.numeroCuenta}
                                 </span>
@@ -565,7 +575,7 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                             )}
                             {companySettings.transferencia.telefono && (
                               <div className="flex justify-between">
-                                <span className="text-sm text-gray-500">Teléfono:</span>
+                                <span className="text-sm text-muted-foreground">Teléfono:</span>
                                 <span className="text-sm font-medium">{companySettings.transferencia.telefono}</span>
                               </div>
                             )}
@@ -573,14 +583,14 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                         )}
 
                       {!companySettings.pagoMovil.banco && !companySettings.transferencia.banco && (
-                        <div className="text-center text-gray-500 py-2">
+                        <div className="text-center text-muted-foreground py-2">
                           <p>No hay información de pago configurada</p>
                         </div>
                       )}
                     </>
                   )}
 
-                  <div className="text-sm text-gray-500 text-center pt-2">
+                  <div className="text-sm text-muted-foreground text-center pt-2">
                     <p>
                       Realice su pago utilizando los datos bancarios proporcionados y luego registre los detalles de su
                       transferencia.
@@ -624,16 +634,20 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                       ))}
                     </SelectContent>
                   </Select>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-muted-foreground">
                     Esta información ayudará al personal a gestionar mejor los espacios
                   </p>
                 </div>
 
                 <div>
-                  <p className="text-sm text-gray-500">Monto a Pagar</p>
-                  <div className="text-center p-4 bg-green-50 rounded-lg mb-4">
-                    <p className="text-2xl font-bold text-green-600">{formatCurrency(montoBs, "VES")}</p>
-                    <p className="text-lg font-medium text-green-500">{formatCurrency(ticket.montoCalculado)}</p>
+                  <p className="text-sm text-muted-foreground">Monto a Pagar</p>
+                  <div className="text-center p-4 bg-green-50 dark:bg-green-950/20 rounded-lg mb-4 border border-green-200 dark:border-green-800/30">
+                    <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                      {formatCurrency(montoBs, "VES")}
+                    </p>
+                    <p className="text-lg font-medium text-green-500 dark:text-green-300">
+                      {formatCurrency(ticket.montoCalculado)}
+                    </p>
                   </div>
                 </div>
 
@@ -715,7 +729,7 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                     placeholder={`${formatCurrency(montoBs, "VES")}`}
                     required
                   />
-                  <p className="text-sm text-green-600 font-medium">
+                  <p className="text-sm text-green-600 dark:text-green-400 font-medium">
                     Referencia: {formatCurrency(montoBs, "VES")} ({formatCurrency(ticket.montoCalculado)})
                   </p>
                 </div>
@@ -728,9 +742,9 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                   </label>
                   <div className="space-y-2">
                     {!selectedImage ? (
-                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-                        <Upload className="mx-auto h-8 w-8 text-gray-400 mb-2" />
-                        <p className="text-sm text-gray-500 mb-2">Suba una captura del resumen de su pago</p>
+                      <div className="border-2 border-dashed border-border rounded-lg p-4 text-center">
+                        <Upload className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
+                        <p className="text-sm text-muted-foreground mb-2">Suba una captura del resumen de su pago</p>
                         <Button
                           type="button"
                           variant="outline"
@@ -749,9 +763,11 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                       </div>
                     ) : (
                       <div className="relative">
-                        <div className="border rounded-lg p-2 bg-gray-50">
+                        <div className="border rounded-lg p-2 bg-muted/50">
                           <div className="flex items-center justify-between mb-2">
-                            <span className="text-sm font-medium text-green-600">✓ Imagen seleccionada</span>
+                            <span className="text-sm font-medium text-green-600 dark:text-green-400">
+                              ✓ Imagen seleccionada
+                            </span>
                             <Button
                               type="button"
                               variant="ghost"
@@ -769,13 +785,15 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                               className="w-full h-32 object-cover rounded"
                             />
                           )}
-                          <p className="text-xs text-gray-500 mt-1">
+                          <p className="text-xs text-muted-foreground mt-1">
                             {selectedImage.name} ({(selectedImage.size / 1024 / 1024).toFixed(2)} MB)
                           </p>
                         </div>
                       </div>
                     )}
-                    <p className="text-xs text-gray-500">Formatos soportados: JPG, PNG, GIF. Tamaño máximo: 5MB</p>
+                    <p className="text-xs text-muted-foreground">
+                      Formatos soportados: JPG, PNG, GIF. Tamaño máximo: 5MB
+                    </p>
                   </div>
                 </div>
               </div>
@@ -798,27 +816,27 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                 // Pantalla de efectivo
                 <>
                   <h2 className="text-xl font-bold mb-4 text-center">Pago en Efectivo</h2>
-                  <div className="bg-blue-50 p-6 rounded-lg text-center">
+                  <div className="bg-blue-50 dark:bg-blue-950/20 p-6 rounded-lg text-center border border-blue-200 dark:border-blue-800/30">
                     <div className="text-6xl mb-4">💰</div>
                     <h3 className="text-lg font-semibold mb-2">Acérquese a la Taquilla</h3>
-                    <p className="text-gray-600 mb-4">
+                    <p className="text-muted-foreground mb-4">
                       Para completar su pago en efectivo, diríjase a la taquilla del estacionamiento.
                     </p>
-                    <div className="bg-white p-4 rounded-lg">
-                      <p className="text-sm text-gray-500 mb-1">Código de Ticket</p>
+                    <div className="bg-card p-4 rounded-lg border">
+                      <p className="text-sm text-muted-foreground mb-1">Código de Ticket</p>
                       <p className="text-xl font-bold mb-3">{ticket.codigoTicket}</p>
-                      <p className="text-sm text-gray-500 mb-1">Monto a Pagar</p>
+                      <p className="text-sm text-muted-foreground mb-1">Monto a Pagar</p>
                       {paymentType === "efectivo_bs" ? (
                         <div>
                           <p className="text-2xl font-bold text-primary">
                             {formatCurrency(formData.montoPagado, "VES")}
                           </p>
-                          <p className="text-lg text-gray-600">{formatCurrency(ticket.montoCalculado)}</p>
+                          <p className="text-lg text-muted-foreground">{formatCurrency(ticket.montoCalculado)}</p>
                         </div>
                       ) : (
                         <div>
                           <p className="text-2xl font-bold text-primary">{formatCurrency(formData.montoPagado)}</p>
-                          <p className="text-lg text-gray-600">{formatCurrency(montoBs, "VES")}</p>
+                          <p className="text-lg text-muted-foreground">{formatCurrency(montoBs, "VES")}</p>
                         </div>
                       )}
                     </div>
@@ -835,16 +853,20 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                 // Vista previa para pagos electrónicos
                 <>
                   <h2 className="text-xl font-bold mb-4 text-center">Confirmar Datos del Pago</h2>
-                  <div className="bg-gray-50 p-6 rounded-lg space-y-4">
+                  <div className="bg-muted/50 p-6 rounded-lg space-y-4 border">
                     <div className="text-center">
-                      <p className="text-sm text-gray-500">Código de Ticket</p>
+                      <p className="text-sm text-muted-foreground">Código de Ticket</p>
                       <p className="text-lg font-bold">{ticket.codigoTicket}</p>
                     </div>
 
-                    <div className="text-center p-4 bg-green-50 rounded-lg">
-                      <p className="text-sm text-gray-500 mb-1">Monto a Pagar</p>
-                      <p className="text-2xl font-bold text-green-600">{formatCurrency(montoBs, "VES")}</p>
-                      <p className="text-lg font-medium text-green-500">{formatCurrency(ticket.montoCalculado)}</p>
+                    <div className="text-center p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800/30">
+                      <p className="text-sm text-muted-foreground mb-1">Monto a Pagar</p>
+                      <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                        {formatCurrency(montoBs, "VES")}
+                      </p>
+                      <p className="text-lg font-medium text-green-500 dark:text-green-300">
+                        {formatCurrency(ticket.montoCalculado)}
+                      </p>
                     </div>
 
                     <div className="space-y-3">
@@ -852,54 +874,54 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
 
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         <div>
-                          <p className="text-gray-500">Tipo de Pago:</p>
+                          <p className="text-muted-foreground">Tipo de Pago:</p>
                           <p className="font-medium">
                             {paymentType === "pago_movil" ? "Pago Móvil" : "Transferencia Bancaria"}
                           </p>
                         </div>
 
                         <div>
-                          <p className="text-gray-500">Tiempo de Salida:</p>
+                          <p className="text-muted-foreground">Tiempo de Salida:</p>
                           <p className="font-medium">{getExitTimeLabel(formData.tiempoSalida || "now")}</p>
                         </div>
 
                         <div>
-                          <p className="text-gray-500">Referencia:</p>
+                          <p className="text-muted-foreground">Referencia:</p>
                           <p className="font-medium">{formData.referenciaTransferencia}</p>
                         </div>
 
                         <div>
-                          <p className="text-gray-500">Banco:</p>
+                          <p className="text-muted-foreground">Banco:</p>
                           <p className="font-medium">{formData.banco}</p>
                         </div>
 
                         <div>
-                          <p className="text-gray-500">Teléfono:</p>
+                          <p className="text-muted-foreground">Teléfono:</p>
                           <p className="font-medium">{formData.telefono}</p>
                         </div>
 
                         <div>
-                          <p className="text-gray-500">Cédula:</p>
+                          <p className="text-muted-foreground">Cédula:</p>
                           <p className="font-medium">{formData.numeroIdentidad}</p>
                         </div>
                       </div>
 
                       {selectedImage && (
                         <div className="mt-4">
-                          <p className="text-gray-500 text-sm mb-2">Comprobante adjunto:</p>
-                          <div className="border rounded-lg p-2 bg-white">
+                          <p className="text-muted-foreground text-sm mb-2">Comprobante adjunto:</p>
+                          <div className="border rounded-lg p-2 bg-card">
                             <img
                               src={imagePreview! || "/placeholder.svg"}
                               alt="Comprobante de pago"
                               className="w-full h-32 object-cover rounded"
                             />
-                            <p className="text-xs text-gray-500 mt-1 text-center">{selectedImage.name}</p>
+                            <p className="text-xs text-muted-foreground mt-1 text-center">{selectedImage.name}</p>
                           </div>
                         </div>
                       )}
                     </div>
 
-                    <div className="text-center text-sm text-gray-500 pt-2">
+                    <div className="text-center text-sm text-muted-foreground pt-2">
                       <p>Verifique que todos los datos sean correctos antes de confirmar el pago.</p>
                     </div>
                   </div>
@@ -940,6 +962,6 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
           />
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   )
 }

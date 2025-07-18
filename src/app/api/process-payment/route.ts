@@ -128,7 +128,7 @@ export async function POST(request: Request) {
     console.log("   Hora Entrada:", ticket.horaEntrada)
 
     // Validar estado del ticket - Estados válidos para pago
-    const estadosValidosParaPago = ["activo", "ocupado", "estacionado", "estacionado_confirmado"]
+    const estadosValidosParaPago = ["activo", "ocupado", "validado", "estacionado", "estacionado_confirmado"]
 
     console.log("🔍 [PROCESS-PAYMENT] Validando estado del ticket...")
     console.log("   Estado actual:", ticket.estado)

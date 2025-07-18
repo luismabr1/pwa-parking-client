@@ -2,56 +2,152 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 9%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 9%;
-    --primary: 0 0% 9%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 96%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 45%;
-    --accent: 0 0% 96%;
-    --accent-foreground: 0 0% 9%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
-    --ring: 0 0% 9%;
-    --radius: 0.5rem;
+    /* 🎨 COLORES PRINCIPALES - MODO CLARO */
+    /* Puedes cambiar estos valores para experimentar con diferentes combinaciones */
+    --background: 0 0% 100%; /* Fondo principal */
+    --foreground: 0 0% 9%; /* Texto principal */
+    --card: 0 0% 100%; /* Fondo de cards */
+    --card-foreground: 0 0% 9%; /* Texto en cards */
+    --popover: 0 0% 100%; /* Fondo de popovers/dropdowns */
+    --popover-foreground: 0 0% 9%; /* Texto en popovers/dropdowns */
+    --primary: 0 0% 9%; /* Color primario (botones principales) */
+    --primary-foreground: 0 0% 98%; /* Texto sobre color primario */
+    --secondary: 0 0% 96%; /* Color secundario */
+    --secondary-foreground: 0 0% 9%; /* Texto sobre color secundario */
+    --muted: 0 0% 96%; /* Elementos silenciados */
+    --muted-foreground: 0 0% 45%; /* Texto silenciado */
+    --accent: 0 0% 96%; /* Color de acento */
+    --accent-foreground: 0 0% 9%; /* Texto sobre color de acento */
+    --destructive: 0 84% 60%; /* Color para errores */
+    --destructive-foreground: 0 0% 98%; /* Texto sobre color destructivo */
+    --border: 0 0% 90%; /* Color de bordes */
+    --input: 0 0% 90%; /* Fondo de inputs */
+    --ring: 0 0% 9%; /* Color de focus ring */
+    --radius: 0.5rem; /* Radio de bordes */
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
   }
 
   .dark {
-    --background: 0 0% 9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14%;
-    --muted-foreground: 0 0% 64%;
-    --accent: 0 0% 14%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14%;
-    --input: 0 0% 14%;
-    --ring: 0 0% 83%;
+    /* 🌙 COLORES PRINCIPALES - MODO OSCURO */
+    /* 🎯 AQUÍ PUEDES EXPERIMENTAR CON DIFERENTES COMBINACIONES DE COLORES */
+    /* Esquema actual: GitHub Dark (profesional y moderno) */
+
+    /* 📱 FONDOS PRINCIPALES */
+    --background: 222 84% 4.9%; /* #0d1117 - Fondo principal muy oscuro */
+    --foreground: 210 40% 98%; /* #f0f6fc - Texto principal claro */
+    --card: 222 84% 4.9%; /* #0d1117 - Cards mismo color que fondo */
+    --card-foreground: 210 40% 98%; /* #f0f6fc - Texto en cards */
+    --popover: 217 32% 17%; /* #21262d - Fondo de dropdowns/popovers (más claro que el fondo) */
+    --popover-foreground: 210 40% 98%; /* #f0f6fc - Texto en dropdowns/popovers */
+
+    /* 🎨 COLORES DE ACCIÓN */
+    --primary: 213 93% 68%; /* #4f96ff - Azul principal (GitHub blue) */
+    --primary-foreground: 222 84% 4.9%; /* #0d1117 - Texto sobre primary */
+
+    /* 🔧 ELEMENTOS SECUNDARIOS */
+    --secondary: 217 32% 17%; /* #21262d - Elementos secundarios */
+    --secondary-foreground: 210 40% 98%; /* #f0f6fc - Texto secundario */
+    --muted: 217 32% 17%; /* #21262d - Elementos silenciados */
+    --muted-foreground: 217 10% 64%; /* #8b949e - Texto silenciado */
+    --accent: 217 32% 22%; /* #30363d - Elementos de acento (hover states) */
+    --accent-foreground: 210 40% 98%; /* #f0f6fc - Texto de acento */
+
+    /* ⚠️ ESTADOS Y BORDES */
+    --destructive: 0 62% 30%; /* #da3633 - Rojo para errores */
+    --destructive-foreground: 210 40% 98%; /* #f0f6fc - Texto sobre destructive */
+    --border: 217 32% 17%; /* #21262d - Bordes */
+    --input: 217 32% 17%; /* #21262d - Inputs */
+    --ring: 213 93% 68%; /* #4f96ff - Focus ring */
+
+    /* 📊 COLORES DE GRÁFICOS */
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
   }
+
+  /* 🎨 ALTERNATIVAS DE ESQUEMAS DE COLORES PARA EXPERIMENTAR */
+  /* 
+  💡 OPCIÓN 1: Esquema Azul Oscuro (Discord-like)
+  .dark {
+    --background: 223 6% 20%;          // #36393f
+    --foreground: 210 11% 96%;         // #dcddde
+    --popover: 223 7% 15%;             // #2f3136
+    --popover-foreground: 210 11% 96%; // #dcddde
+    --primary: 235 86% 65%;            // #5865f2
+    --secondary: 223 7% 15%;           // #2f3136
+    --muted: 223 7% 15%;               // #2f3136
+    --accent: 223 6% 25%;              // #40444b
+    --border: 223 6% 25%;              // #40444b
+  }
+
+  💡 OPCIÓN 2: Esquema Verde Oscuro (Matrix-like)
+  .dark {
+    --background: 120 100% 2%;         // #001100
+    --foreground: 120 100% 90%;        // #ccffcc
+    --popover: 120 50% 10%;            // #1a331a
+    --popover-foreground: 120 100% 90%; // #ccffcc
+    --primary: 120 100% 50%;           // #00ff00
+    --secondary: 120 50% 10%;          // #1a331a
+    --muted: 120 50% 10%;              // #1a331a
+    --accent: 120 50% 15%;             // #264d26
+    --border: 120 50% 15%;             // #264d26
+  }
+
+  💡 OPCIÓN 3: Esquema Púrpura Oscuro (Elegant)
+  .dark {
+    --background: 260 15% 8%;          // #1a1625
+    --foreground: 260 15% 95%;         // #f1f0f5
+    --popover: 260 15% 12%;            // #252033
+    --popover-foreground: 260 15% 95%; // #f1f0f5
+    --primary: 260 100% 70%;           // #8b5cf6
+    --secondary: 260 15% 12%;          // #252033
+    --muted: 260 15% 12%;              // #252033
+    --accent: 260 15% 18%;             // #3a3548
+    --border: 260 15% 18%;             // #3a3548
+  }
+
+  💡 OPCIÓN 4: Esquema Naranja Oscuro (Warm)
+  .dark {
+    --background: 20 14% 8%;           // #1c1814
+    --foreground: 20 14% 95%;          // #f5f4f1
+    --popover: 20 14% 12%;             // #28241e
+    --popover-foreground: 20 14% 95%;  // #f5f4f1
+    --primary: 25 95% 53%;             // #f97316
+    --secondary: 20 14% 12%;           // #28241e
+    --muted: 20 14% 12%;               // #28241e
+    --accent: 20 14% 18%;              // #3d362b
+    --border: 20 14% 18%;              // #3d362b
+  }
+  */
 }
 
 @layer base {
   * {
     border-color: hsl(var(--border));
   }
+
   body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Asegurar que todos los elementos principales usen las variables correctas */
+  html {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+  }
+
+  /* Forzar el fondo en elementos principales */
+  #__next,
+  main,
+  .min-h-screen {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
   }
@@ -85,20 +181,256 @@
   animation: spin 1s linear infinite;
 }
 
-/* Custom scrollbar */
+/* Custom scrollbar para modo oscuro */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: hsl(var(--muted));
+  background: hsl(var(--background));
 }
 
 ::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted-foreground));
-  border-radius: 3px;
+  background: hsl(var(--muted));
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--foreground));
+  background: hsl(var(--muted-foreground));
+}
+
+/* 🎯 ESTILOS ESPECÍFICOS PARA DROPDOWNS Y SELECTS */
+/* Asegurar que todos los dropdowns tengan fondo apropiado */
+[data-radix-select-content] {
+  background-color: hsl(var(--popover)) !important;
+  color: hsl(var(--popover-foreground)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+}
+
+[data-radix-select-item] {
+  background-color: hsl(var(--popover)) !important;
+  color: hsl(var(--popover-foreground)) !important;
+}
+
+[data-radix-select-item]:hover,
+[data-radix-select-item][data-highlighted] {
+  background-color: hsl(var(--accent)) !important;
+  color: hsl(var(--accent-foreground)) !important;
+}
+
+[data-radix-select-viewport] {
+  background-color: hsl(var(--popover)) !important;
+}
+
+/* Estilos adicionales para otros tipos de dropdowns */
+.dropdown-menu,
+.select-dropdown,
+[role="listbox"],
+[role="menu"] {
+  background-color: hsl(var(--popover)) !important;
+  color: hsl(var(--popover-foreground)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+.dropdown-menu-item,
+.select-option,
+[role="option"],
+[role="menuitem"] {
+  background-color: hsl(var(--popover)) !important;
+  color: hsl(var(--popover-foreground)) !important;
+  padding: 0.375rem 0.75rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease-in-out;
+}
+
+.dropdown-menu-item:hover,
+.select-option:hover,
+[role="option"]:hover,
+[role="menuitem"]:hover,
+.dropdown-menu-item:focus,
+.select-option:focus,
+[role="option"]:focus,
+[role="menuitem"]:focus {
+  background-color: hsl(var(--accent)) !important;
+  color: hsl(var(--accent-foreground)) !important;
+  outline: none;
+}
+
+/* Asegurar que los elementos de formulario respeten el tema */
+input,
+textarea,
+select {
+  background-color: hsl(var(--input));
+  color: hsl(var(--foreground));
+  border: 1px solid hsl(var(--border));
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+/* Mejorar contraste en modo oscuro */
+.dark {
+  color-scheme: dark;
+}
+
+/* Colores contextuales mejorados para modo oscuro */
+.dark .text-blue-600 {
+  color: #58a6ff !important;
+}
+.dark .text-blue-700 {
+  color: #58a6ff !important;
+}
+.dark .text-blue-800 {
+  color: #79c0ff !important;
+}
+.dark .text-blue-900 {
+  color: #a5d6ff !important;
+}
+
+.dark .text-green-600 {
+  color: #3fb950 !important;
+}
+.dark .text-green-700 {
+  color: #3fb950 !important;
+}
+.dark .text-green-800 {
+  color: #56d364 !important;
+}
+
+.dark .text-red-600 {
+  color: #f85149 !important;
+}
+.dark .text-red-700 {
+  color: #f85149 !important;
+}
+.dark .text-red-800 {
+  color: #ff7b72 !important;
+}
+
+.dark .text-yellow-600 {
+  color: #d29922 !important;
+}
+.dark .text-yellow-700 {
+  color: #d29922 !important;
+}
+.dark .text-yellow-800 {
+  color: #e3b341 !important;
+}
+
+/* Fondos contextuales para modo oscuro */
+.dark .bg-blue-50 {
+  background-color: hsl(213 93% 68% / 0.1) !important;
+}
+.dark .bg-green-50 {
+  background-color: hsl(142 76% 36% / 0.1) !important;
+}
+.dark .bg-red-50 {
+  background-color: hsl(0 62% 30% / 0.1) !important;
+}
+.dark .bg-yellow-50 {
+  background-color: hsl(38 92% 50% / 0.1) !important;
+}
+
+/* Bordes contextuales para modo oscuro */
+.dark .border-blue-200 {
+  border-color: hsl(213 93% 68% / 0.2) !important;
+}
+.dark .border-green-200 {
+  border-color: hsl(142 76% 36% / 0.2) !important;
+}
+.dark .border-red-200 {
+  border-color: hsl(0 62% 30% / 0.2) !important;
+}
+.dark .border-yellow-200 {
+  border-color: hsl(38 92% 50% / 0.2) !important;
+}
+
+/* Asegurar consistencia en botones */
+.dark .bg-transparent {
+  background-color: transparent !important;
+}
+
+/* Mejorar legibilidad de placeholders */
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: hsl(var(--muted-foreground));
+  opacity: 0.7;
+}
+
+/* Asegurar que los elementos con fondo gris se vean bien */
+.dark .bg-gray-50 {
+  background-color: hsl(var(--muted)) !important;
+}
+
+.dark .bg-gray-100 {
+  background-color: hsl(var(--muted)) !important;
+}
+
+/* Mejorar contraste de iconos */
+.dark svg {
+  color: inherit;
+}
+
+/* Asegurar que los badges se vean bien */
+.dark .bg-secondary {
+  background-color: hsl(var(--secondary));
+  color: hsl(var(--secondary-foreground));
+}
+
+/* Mejorar apariencia de selects nativos */
+.dark select {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23f0f6fc' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+  background-color: hsl(var(--input));
+  color: hsl(var(--foreground));
+}
+
+/* Asegurar que los elementos de carga se vean bien */
+.dark .animate-spin {
+  border-color: hsl(var(--muted));
+  border-top-color: hsl(var(--primary));
+}
+
+/* 🎯 ESTILOS ESPECÍFICOS PARA RADIX UI COMPONENTS */
+/* Tooltip */
+[data-radix-tooltip-content] {
+  background-color: hsl(var(--popover)) !important;
+  color: hsl(var(--popover-foreground)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+}
+
+/* Dialog/Modal */
+[data-radix-dialog-content] {
+  background-color: hsl(var(--background)) !important;
+  color: hsl(var(--foreground)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+}
+
+/* Popover */
+[data-radix-popover-content] {
+  background-color: hsl(var(--popover)) !important;
+  color: hsl(var(--popover-foreground)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+}
+
+/* DropdownMenu */
+[data-radix-dropdown-menu-content] {
+  background-color: hsl(var(--popover)) !important;
+  color: hsl(var(--popover-foreground)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+}
+
+[data-radix-dropdown-menu-item] {
+  background-color: hsl(var(--popover)) !important;
+  color: hsl(var(--popover-foreground)) !important;
+}
+
+[data-radix-dropdown-menu-item]:hover,
+[data-radix-dropdown-menu-item][data-highlighted] {
+  background-color: hsl(var(--accent)) !important;
+  color: hsl(var(--accent-foreground)) !important;
 }

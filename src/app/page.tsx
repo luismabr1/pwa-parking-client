@@ -5,7 +5,7 @@ import { HeroLogo } from "@/components/ui/logo"
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-background">
+    <main className="min-h-screen bg-background text-foreground">
       <div className="container max-w-md mx-auto px-4 py-8 space-y-8">
         <div className="text-center space-y-4">
           {/* Solo el logo centrado, como en la versión "antes" */}
