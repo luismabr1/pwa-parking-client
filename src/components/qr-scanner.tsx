@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Camera, X, Scan } from "lucide-react"
-import QrScanner from "./qr-scanner"
+import QrScanner from "qr-scanner"
 
 interface QRScannerProps {
   onScanSuccess: (ticketCode: string) => void
