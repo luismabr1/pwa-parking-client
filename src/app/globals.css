@@ -73,58 +73,58 @@
 
   /* 🎨 ALTERNATIVAS DE ESQUEMAS DE COLORES PARA EXPERIMENTAR */
   /* 
-  💡 OPCIÓN 1: Esquema Azul Oscuro (Discord-like)
-  .dark {
-    --background: 223 6% 20%;          // #36393f
-    --foreground: 210 11% 96%;         // #dcddde
-    --popover: 223 7% 15%;             // #2f3136
-    --popover-foreground: 210 11% 96%; // #dcddde
-    --primary: 235 86% 65%;            // #5865f2
-    --secondary: 223 7% 15%;           // #2f3136
-    --muted: 223 7% 15%;               // #2f3136
-    --accent: 223 6% 25%;              // #40444b
-    --border: 223 6% 25%;              // #40444b
-  }
+ 💡 OPCIÓN 1: Esquema Azul Oscuro (Discord-like)
+ .dark {
+   --background: 223 6% 20%;          // #36393f
+   --foreground: 210 11% 96%;         // #dcddde
+   --popover: 223 7% 15%;             // #2f3136
+   --popover-foreground: 210 11% 96%; // #dcddde
+   --primary: 235 86% 65%;            // #5865f2
+   --secondary: 223 7% 15%;           // #2f3136
+   --muted: 223 7% 15%;               // #2f3136
+   --accent: 223 6% 25%;              // #40444b
+   --border: 223 6% 25%;              // #40444b
+ }
 
-  💡 OPCIÓN 2: Esquema Verde Oscuro (Matrix-like)
-  .dark {
-    --background: 120 100% 2%;         // #001100
-    --foreground: 120 100% 90%;        // #ccffcc
-    --popover: 120 50% 10%;            // #1a331a
-    --popover-foreground: 120 100% 90%; // #ccffcc
-    --primary: 120 100% 50%;           // #00ff00
-    --secondary: 120 50% 10%;          // #1a331a
-    --muted: 120 50% 10%;              // #1a331a
-    --accent: 120 50% 15%;             // #264d26
-    --border: 120 50% 15%;             // #264d26
-  }
+ 💡 OPCIÓN 2: Esquema Verde Oscuro (Matrix-like)
+ .dark {
+   --background: 120 100% 2%;         // #001100
+   --foreground: 120 100% 90%;        // #ccffcc
+   --popover: 120 50% 10%;            // #1a331a
+   --popover-foreground: 120 100% 90%; // #ccffcc
+   --primary: 120 100% 50%;           // #00ff00
+   --secondary: 120 50% 10%;          // #1a331a
+   --muted: 120 50% 10%;              // #1a331a
+   --accent: 120 50% 15%;             // #264d26
+   --border: 120 50% 15%;             // #264d26
+ }
 
-  💡 OPCIÓN 3: Esquema Púrpura Oscuro (Elegant)
-  .dark {
-    --background: 260 15% 8%;          // #1a1625
-    --foreground: 260 15% 95%;         // #f1f0f5
-    --popover: 260 15% 12%;            // #252033
-    --popover-foreground: 260 15% 95%; // #f1f0f5
-    --primary: 260 100% 70%;           // #8b5cf6
-    --secondary: 260 15% 12%;          // #252033
-    --muted: 260 15% 12%;              // #252033
-    --accent: 260 15% 18%;             // #3a3548
-    --border: 260 15% 18%;             // #3a3548
-  }
+ 💡 OPCIÓN 3: Esquema Púrpura Oscuro (Elegant)
+ .dark {
+   --background: 260 15% 8%;          // #1a1625
+   --foreground: 260 15% 95%;         // #f1f0f5
+   --popover: 260 15% 12%;            // #252033
+   --popover-foreground: 260 15% 95%; // #f1f0f5
+   --primary: 260 100% 70%;           // #8b5cf6
+   --secondary: 260 15% 12%;          // #252033
+   --muted: 260 15% 12%;              // #252033
+   --accent: 260 15% 18%;             // #3a3548
+   --border: 260 15% 18%;             // #3a3548
+ }
 
-  💡 OPCIÓN 4: Esquema Naranja Oscuro (Warm)
-  .dark {
-    --background: 20 14% 8%;           // #1c1814
-    --foreground: 20 14% 95%;          // #f5f4f1
-    --popover: 20 14% 12%;             // #28241e
-    --popover-foreground: 20 14% 95%;  // #f5f4f1
-    --primary: 25 95% 53%;             // #f97316
-    --secondary: 20 14% 12%;           // #28241e
-    --muted: 20 14% 12%;               // #28241e
-    --accent: 20 14% 18%;              // #3d362b
-    --border: 20 14% 18%;              // #3d362b
-  }
-  */
+ 💡 OPCIÓN 4: Esquema Naranja Oscuro (Warm)
+ .dark {
+   --background: 20 14% 8%;           // #1c1814
+   --foreground: 20 14% 95%;          // #f5f4f1
+   --popover: 20 14% 12%;             // #28241e
+   --popover-foreground: 20 14% 95%;  // #f5f4f1
+   --primary: 25 95% 53%;             // #f97316
+   --secondary: 20 14% 12%;           // #28241e
+   --muted: 20 14% 12%;               // #28241e
+   --accent: 20 14% 18%;              // #3d362b
+   --border: 20 14% 18%;              // #3d362b
+ }
+ */
 }
 
 @layer base {

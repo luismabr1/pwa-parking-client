@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Download, Smartphone, Plus } from "lucide-react"
+import { X, Download, Smartphone } from "lucide-react"
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>
@@ -12,8 +11,7 @@ interface BeforeInstallPromptEvent extends Event {
 
 export default function PWAInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
-  const [showInstallButton, setShowInstallButton] = useState(false)
-  const [showInstallDialog, setShowInstallDialog] = useState(false)
+  const [showBanner, setShowBanner] = useState(false)
   const [isInstalled, setIsInstalled] = useState(false)
   const [isIOS, setIsIOS] = useState(false)
 
@@ -34,11 +32,11 @@ export default function PWAInstallPrompt() {
       return
     }
 
-    // Para iOS, mostrar botón después de un delay
+    // Para iOS, mostrar banner después de un delay
     if (isIOSDevice) {
       const timer = setTimeout(() => {
-        setShowInstallButton(true)
-      }, 5000) // Mostrar después de 5 segundos
+        setShowBanner(true)
+      }, 8000) // Mostrar después de 8 segundos
       return () => clearTimeout(timer)
     }
 
@@ -46,14 +44,17 @@ export default function PWAInstallPrompt() {
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault()
       setDeferredPrompt(e as BeforeInstallPromptEvent)
-      setShowInstallButton(true)
+
+      // Mostrar banner después de un delay
+      setTimeout(() => {
+        setShowBanner(true)
+      }, 5000)
     }
 
     // Listen for app installed event
     const handleAppInstalled = () => {
       setIsInstalled(true)
-      setShowInstallButton(false)
-      setShowInstallDialog(false)
+      setShowBanner(false)
       setDeferredPrompt(null)
       localStorage.removeItem("pwa-install-dismissed")
     }
@@ -68,144 +69,82 @@ export default function PWAInstallPrompt() {
   }, [])
 
   const handleInstallClick = async () => {
-    if (!deferredPrompt) {
-      // Para iOS o si no hay prompt, mostrar instrucciones
-      setShowInstallDialog(true)
+    if (!deferredPrompt && !isIOS) {
       return
     }
 
-    try {
-      await deferredPrompt.prompt()
-      const { outcome } = await deferredPrompt.userChoice
+    if (deferredPrompt) {
+      try {
+        await deferredPrompt.prompt()
+        const { outcome } = await deferredPrompt.userChoice
 
-      if (outcome === "accepted") {
-        console.log("User accepted the install prompt")
-        setShowInstallButton(false)
-        setShowInstallDialog(false)
-      } else {
-        console.log("User dismissed the install prompt")
-        setShowInstallDialog(false)
+        if (outcome === "accepted") {
+          console.log("User accepted the install prompt")
+          setShowBanner(false)
+        } else {
+          console.log("User dismissed the install prompt")
+        }
+
+        setDeferredPrompt(null)
+      } catch (error) {
+        console.error("Error during installation:", error)
       }
-
-      setDeferredPrompt(null)
-    } catch (error) {
-      console.error("Error during installation:", error)
-      setShowInstallDialog(false)
     }
+  }
+
+  const handleDismiss = () => {
+    setShowBanner(false)
   }
 
   const handleDismissPermanently = () => {
     localStorage.setItem("pwa-install-dismissed", "true")
-    setShowInstallButton(false)
-    setShowInstallDialog(false)
+    setShowBanner(false)
   }
 
-  // Don't show if already installed
-  if (isInstalled || !showInstallButton) {
+  // Don't show if already installed or not ready
+  if (isInstalled || !showBanner) {
     return null
   }
 
   return (
-    <>
-      {/* Botón discreto para instalar */}
-      <div className="flex justify-center">
-        <Button
-          onClick={handleInstallClick}
-          variant="outline"
-          size="sm"
-          className="bg-background border-border hover:bg-accent hover:text-accent-foreground"
-        >
-          <Download className="h-4 w-4 mr-2" />
-          Instalar App
-        </Button>
-      </div>
+    <div className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border shadow-lg">
+      <div className="max-w-md mx-auto p-4">
+        <div className="flex items-center gap-3">
+          <div className="flex-shrink-0 w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
+            <Smartphone className="h-5 w-5 text-muted-foreground" />
+          </div>
 
-      {/* Dialog con información de instalación */}
-      <Dialog open={showInstallDialog} onOpenChange={setShowInstallDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-foreground">
-              <Smartphone className="h-5 w-5" />
-              {isIOS ? "Agregar a Inicio" : "Instalar Aplicación"}
-            </DialogTitle>
-          </DialogHeader>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-foreground">{isIOS ? "Agregar a Inicio" : "Instalar App"}</p>
+            <p className="text-xs text-muted-foreground truncate">
+              {isIOS ? "Toca Compartir → Agregar a pantalla de inicio" : "Acceso rápido y notificaciones"}
+            </p>
+          </div>
 
-          <div className="space-y-4">
-            {isIOS ? (
-              <div className="space-y-3">
-                <p className="text-sm text-muted-foreground">Para instalar esta app en tu iPhone/iPad:</p>
-                <div className="space-y-3">
-                  <div className="flex items-start gap-3 p-3 bg-muted rounded-lg">
-                    <span className="flex-shrink-0 w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-bold">
-                      1
-                    </span>
-                    <span className="text-sm text-foreground">
-                      Toca el botón <strong>Compartir</strong> en Safari
-                    </span>
-                  </div>
-                  <div className="flex items-start gap-3 p-3 bg-muted rounded-lg">
-                    <span className="flex-shrink-0 w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-bold">
-                      2
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-foreground">
-                        Selecciona <strong>"Agregar a pantalla de inicio"</strong>
-                      </span>
-                      <Plus className="h-4 w-4 text-primary" />
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3 p-3 bg-muted rounded-lg">
-                    <span className="flex-shrink-0 w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-bold">
-                      3
-                    </span>
-                    <span className="text-sm text-foreground">
-                      Toca <strong>"Agregar"</strong> para confirmar
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <p className="text-sm text-muted-foreground">
-                  Instala la app para acceso rápido y recibir notificaciones de tus pagos y vehículo.
-                </p>
-                <div className="bg-muted p-3 rounded-lg">
-                  <p className="text-xs text-muted-foreground">
-                    <strong className="text-foreground">Beneficios:</strong> Acceso offline, notificaciones push, inicio
-                    rápido desde tu pantalla de inicio
-                  </p>
-                </div>
-              </div>
+          <div className="flex items-center gap-2">
+            {!isIOS && deferredPrompt && (
+              <Button onClick={handleInstallClick} size="sm" className="text-xs px-3">
+                <Download className="h-3 w-3 mr-1" />
+                Instalar
+              </Button>
             )}
 
-            <div className="flex gap-2 pt-2">
-              {!isIOS && deferredPrompt && (
-                <Button onClick={handleInstallClick} className="flex-1">
-                  <Download className="h-4 w-4 mr-2" />
-                  Instalar Ahora
-                </Button>
-              )}
-
-              <Button
-                variant="outline"
-                onClick={() => setShowInstallDialog(false)}
-                className={isIOS || !deferredPrompt ? "flex-1" : ""}
-              >
-                {isIOS ? "Entendido" : "Después"}
-              </Button>
-
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleDismissPermanently}
-                className="text-xs text-muted-foreground hover:text-foreground"
-              >
-                No mostrar más
-              </Button>
-            </div>
+            <Button onClick={handleDismiss} variant="ghost" size="sm" className="p-1 h-8 w-8">
+              <X className="h-4 w-4" />
+            </Button>
           </div>
-        </DialogContent>
-      </Dialog>
-    </>
+        </div>
+
+        {/* Botón discreto para no mostrar más */}
+        <div className="mt-2 text-center">
+          <button
+            onClick={handleDismissPermanently}
+            className="text-xs text-muted-foreground hover:text-foreground underline"
+          >
+            No mostrar más
+          </button>
+        </div>
+      </div>
+    </div>
   )
 }

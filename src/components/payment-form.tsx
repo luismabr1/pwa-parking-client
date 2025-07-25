@@ -24,7 +24,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { formatCurrency } from "@/lib/utils"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import type { Ticket, PaymentFormData, CompanySettings } from "@/lib/types"
 import { useTicketNotifications } from "@/hooks/use-ticket-notification"
 import NotificationPrompt from "@/components/notifications/notification-prompt"
@@ -947,9 +947,12 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
 
       {/* Dialog para prompt de notificaciones */}
       <Dialog open={showNotificationPrompt} onOpenChange={setShowNotificationPrompt}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="sr-only">Activar Notificaciones</DialogTitle>
+        <DialogContent className="sm:max-w-md bg-background border-border p-4 shadow-2xl">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Activar Notificaciones</DialogTitle>
+            <DialogDescription id="dialog-description">
+              Configurar notificaciones para el ticket {ticket.codigoTicket}
+            </DialogDescription>
           </DialogHeader>
           <NotificationPrompt
             ticketCode={ticket.codigoTicket}
