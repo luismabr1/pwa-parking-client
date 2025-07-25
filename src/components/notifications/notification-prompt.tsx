@@ -91,27 +91,27 @@ export default function NotificationPrompt({
 
   if (success) {
     return (
-      <Card className="w-full max-w-md mx-auto">
+      <Card className="w-full max-w-md mx-auto bg-white dark:bg-gray-800 text-foreground shadow-xl">
         <CardContent className="pt-6 text-center">
           <CheckCircle2 className="mx-auto h-16 w-16 text-green-500 mb-4" />
           <h3 className="text-lg font-semibold mb-2">¡Notificaciones Activadas!</h3>
-          <p className="text-gray-600">Te notificaremos cuando tu pago sea validado</p>
+          <p className="text-foreground">Te notificaremos cuando tu pago sea validado</p>
         </CardContent>
       </Card>
     )
   }
 
   return (
-    <Card className="w-full max-w-md mx-auto">
+    <Card className="w-full max-w-md mx-auto bg-white dark:bg-gray-800 text-foreground shadow-xl">
       <CardHeader className="text-center pb-4">
-        <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-          <Bell className="h-8 w-8 text-blue-600" />
+        <div className="mx-auto w-16 h-16 bg-blue-50 dark:bg-blue-900/50 rounded-full flex items-center justify-center mb-4">
+          <Bell className="h-8 w-8 text-blue-600 dark:text-blue-300" />
         </div>
         <CardTitle className="text-xl">¿Activar Notificaciones?</CardTitle>
       </CardHeader>
 
       <CardContent className="space-y-4">
-        <div className="text-center text-gray-600 space-y-2">
+        <div className="text-center text-foreground space-y-2">
           <p className="font-medium">Te notificaremos cuando:</p>
           <ul className="text-sm space-y-1">
             <li>✅ Tu pago sea validado</li>
@@ -121,37 +121,37 @@ export default function NotificationPrompt({
         </div>
 
         {error && (
-          <Alert>
-            <AlertDescription className="text-red-600">{error}</AlertDescription>
+          <Alert variant="destructive">
+            <AlertDescription className="text-red-500 dark:text-red-400">{error}</AlertDescription>
           </Alert>
         )}
 
-        <div className="bg-blue-50 p-3 rounded-lg">
-          <p className="text-sm text-blue-800">
+        <div className="bg-blue-50 dark:bg-blue-900/50 p-3 rounded-lg">
+          <p className="text-sm text-blue-800 dark:text-blue-200">
             <strong>Ticket:</strong> {ticketCode}
           </p>
-          <p className="text-xs text-blue-600 mt-1">Las notificaciones están vinculadas a este ticket específico</p>
+          <p className="text-xs text-blue-600 dark:text-blue-300 mt-1">Las notificaciones están vinculadas a este ticket específico</p>
         </div>
 
         <div className="flex gap-3">
-          <Button onClick={onSkip} variant="outline" className="flex-1 bg-transparent" disabled={isEnabling}>
-            <BellOff className="mr-2 h-4 w-4" />
+          <Button onClick={onSkip} variant="outline" className="flex-1 bg-transparent text-foreground" disabled={isEnabling}>
+            <BellOff className="mr-2 h-4 w-4 text-foreground" />
             Omitir
           </Button>
 
-          <Button onClick={handleEnable} className="flex-1" disabled={isEnabling}>
+          <Button onClick={handleEnable} className="flex-1 text-foreground" disabled={isEnabling}>
             {isEnabling ? (
               "Activando..."
             ) : (
               <>
-                <Bell className="mr-2 h-4 w-4" />
+                <Bell className="mr-2 h-4 w-4 text-foreground" />
                 Activar
               </>
             )}
           </Button>
         </div>
 
-        <p className="text-xs text-gray-500 text-center">
+        <p className="text-xs text-muted-foreground text-center">
           Puedes desactivar las notificaciones en cualquier momento desde la configuración de tu navegador
         </p>
       </CardContent>

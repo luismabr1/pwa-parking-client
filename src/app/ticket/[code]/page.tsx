@@ -4,23 +4,26 @@ import { useState, useEffect } from "react"
 import { useParams } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, AlertCircle, Car, Clock, DollarSign, RefreshCw } from "lucide-react"
+import { ArrowLeft, AlertCircle, Car, Clock, DollarSign, RefreshCw, Moon } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { formatCurrency, formatDateTime } from "@/lib/utils"
 import PaymentForm from "@/components/payment-form"
 import Link from "next/link"
 import type { Ticket } from "@/lib/types"
 
-// Updated interface to include montoBs and tasaCambio
+// Updated interface to include montoBs, tasaCambio, pricingModel, and isNightTariff
 interface TicketWithBs extends Ticket {
   montoBs?: number
   tasaCambio?: number
+  pricingModel?: "variable" | "fija"
+  isNightTariff?: boolean
+  nightStart?: string
+  nightEnd?: string
 }
 
 export default function TicketDetailsPage() {
   const params = useParams()
   const ticketCode = params.code as string
-  // Use the updated interface
   const [ticket, setTicket] = useState<TicketWithBs | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState("")
@@ -186,7 +189,6 @@ export default function TicketDetailsPage() {
                   </div>
                 </div>
               </div>
-
               <div className="space-y-2">
                 <div className="flex items-center space-x-2">
                   <Clock className="h-6 w-6 text-green-600" />
@@ -234,7 +236,7 @@ export default function TicketDetailsPage() {
             <div className="text-center p-6 bg-green-50 dark:bg-green-950/30 rounded-lg border border-green-200 dark:border-green-800">
               <div className="flex items-center justify-center space-x-2 mb-2">
                 <DollarSign className="h-8 w-8 text-green-600" />
-                <div>
+                <div className="text-center">
                   <p className="text-sm text-green-600 dark:text-green-400">Monto a Pagar</p>
                   <p className="text-3xl font-bold text-green-600">{formatCurrency(ticket.montoCalculado)}</p>
                   {ticket.montoBs && (
@@ -246,7 +248,9 @@ export default function TicketDetailsPage() {
                 </div>
               </div>
               <p className="text-sm text-green-600 dark:text-green-400">
-                Calculado automáticamente basado en el tiempo de estacionamiento
+                {ticket.pricingModel === "fija"
+                  ? "Tarifa fija aplicada según el horario de entrada"
+                  : "Calculado por horas según el tiempo de estacionamiento y horario"}
               </p>
               {ticket.tasaCambio && (
                 <p className="text-xs text-green-500 dark:text-green-500 mt-1">
@@ -254,6 +258,18 @@ export default function TicketDetailsPage() {
                   {ticket.tasaCambio.toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{" "}
                   Bs/USD
                 </p>
+              )}
+              {ticket.isNightTariff && (
+                <Alert
+                  variant="warning"
+                  className="mt-4 bg-yellow-50 dark:bg-yellow-950/30 border-yellow-200 dark:border-yellow-800"
+                >
+                  <Moon className="h-4 w-4 text-yellow-600" />
+                  <AlertDescription className="text-yellow-800 dark:text-yellow-200">
+                    Se aplicó la tarifa nocturna debido a que la entrada fue durante el horario nocturno (
+                    {ticket.nightStart} - {ticket.nightEnd}).
+                  </AlertDescription>
+                </Alert>
               )}
             </div>
 

@@ -18,7 +18,7 @@ export default function Home() {
 
         <TicketSearch />
 
-        <NotificationSettings userType="user" />
+{/*         <NotificationSettings userType="user" /> */}
 
         <PWAInstallPrompt />
       </div>

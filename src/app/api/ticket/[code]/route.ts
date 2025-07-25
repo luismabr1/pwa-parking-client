@@ -1,15 +1,19 @@
-import { NextResponse } from "next/server"
-import clientPromise from "@/lib/mongodb"
-import { calculateParkingFee } from "@/lib/utils"
+// api/ticket/[code]/route.ts
+import { NextResponse } from "next/server";
+import clientPromise from "@/lib/mongodb";
+import { calculateParkingFee, isNightTime } from "@/lib/utils";
 
 export async function GET(request: Request, { params }: { params: { code: string } }) {
   try {
     const client = await clientPromise;
     const db = client.db("parking");
-    const { code } = await params;
+    const { code } = params;
     const ticketCode = code;
 
-    console.log(`🔍 API ticket/[code]: Buscando ticket: ${ticketCode}`);
+    // Use NEXT_PUBLIC_PRICING_MODEL consistently
+    const pricingModel = process.env.NEXT_PUBLIC_PRICING_MODEL as "variable" | "fija" || "variable";
+
+    console.log(`🔍 API ticket/[code]: Buscando ticket: ${ticketCode}, pricingModel: ${pricingModel}`);
 
     // Buscar el ticket
     const ticket = await db.collection("tickets").findOne({ codigoTicket: ticketCode });
@@ -30,6 +34,7 @@ export async function GET(request: Request, { params }: { params: { code: string
     let montoCalculado = 0;
     let horaEntrada = null;
     let canProceed = false;
+    let isNightTariff = false;
 
     // Buscar información del carro asociado
     console.log(`🚗 Buscando carro asociado a ticket: ${ticketCode}`);
@@ -46,91 +51,63 @@ export async function GET(request: Request, { params }: { params: { code: string
 
     // Obtener la configuración de tarifas
     const settings = await db.collection("company_settings").findOne({});
-    const precioHora = settings?.tarifas?.precioHora || 3.0;
+    const precioHora = settings?.tarifas?.precioHoraDiurno || 3.0;
+    const precioHoraNoche = settings?.tarifas?.precioHoraNocturno || 4.0;
     const tasaCambio = settings?.tarifas?.tasaCambio || 35.0;
+    const nightStart = settings?.tarifas?.horaInicioNocturno || "00:00";
+    const nightEnd = settings?.tarifas?.horaFinNocturno || "06:00";
 
     // Determinar la hora de entrada y calcular el monto
     if (ticket.estado === "validado" && ticket.horaOcupacion) {
       horaEntrada = new Date(ticket.horaOcupacion);
-      const now = new Date();
-      const diffInMs = now.getTime() - horaEntrada.getTime();
-      const diffInHours = diffInMs / (1000 * 60 * 60);
-
-      montoCalculado = Math.max(diffInHours * precioHora, precioHora / 2);
-      montoCalculado = Number.parseFloat(montoCalculado.toFixed(2));
-      const montoBs = Number.parseFloat((montoCalculado * tasaCambio).toFixed(2));
-
       canProceed = true;
-      console.log(`💰 Ticket estacionado confirmado - Calculado: $${montoCalculado} / Bs. ${montoBs}`);
-    } else if (ticket.estado === "ocupado") {
-      console.log(`⚠️ Ticket ocupado pero no confirmado: ${ticketCode}`);
-      return NextResponse.json(
-        {
-          message:
-            "Este vehículo está registrado pero aún no ha sido confirmado como estacionado por el personal. Por favor espere la confirmación.",
-        },
-        { status: 404 },
-      );
     } else if (ticket.estado === "activo" && ticket.horaEntrada) {
       horaEntrada = new Date(ticket.horaEntrada);
-      const now = new Date();
-      const diffInMs = now.getTime() - horaEntrada.getTime();
-      const diffInHours = diffInMs / (1000 * 60 * 60);
-
-      montoCalculado = Math.max(diffInHours * precioHora, precioHora / 2);
-      montoCalculado = Number.parseFloat(montoCalculado.toFixed(2));
-      const montoBs = Number.parseFloat((montoCalculado * tasaCambio).toFixed(2));
-
       canProceed = true;
-      console.log(`💰 Ticket activo legacy - Calculado: $${montoCalculado} / Bs. ${montoBs}`);
-    } else if (ticket.estado === "disponible") {
-      if (car) {
-        console.log(`⚠️ Ticket disponible pero con carro asignado - requiere confirmación`);
-        return NextResponse.json(
-          {
-            message:
-              "Este vehículo está registrado pero aún no ha sido confirmado como estacionado por el personal. Por favor espere la confirmación.",
-          },
-          { status: 404 },
-        );
-      } else {
-        console.log(`⚠️ Ticket disponible sin carro: ${ticketCode}`);
-        return NextResponse.json(
-          {
-            message:
-              "Este ticket no tiene un vehículo asignado. Debe registrar un carro primero en el panel de administración.",
-          },
-          { status: 404 },
-        );
-      }
+    } else if (ticket.estado === "ocupado" || ticket.estado === "disponible") {
+      console.log(`⚠️ Ticket no confirmado: ${ticketCode}, estado: ${ticket.estado}`);
+      return NextResponse.json(
+        {
+          message: "Este vehículo está registrado pero aún no ha sido confirmado como estacionado por el personal.",
+        },
+        { status: 404 }
+      );
     } else if (ticket.estado === "pago_rechazado") {
-      if (ticket.horaOcupacion) {
-        horaEntrada = new Date(ticket.horaOcupacion);
-      } else if (ticket.horaEntrada) {
-        horaEntrada = new Date(ticket.horaEntrada);
-      }
-      if (horaEntrada) {
-        montoCalculado = calculateParkingFee(horaEntrada);
-        canProceed = true;
-        console.log(`🔄 Ticket con pago rechazado - Calculado: $${montoCalculado}`);
-      }
+      horaEntrada = ticket.horaOcupacion ? new Date(ticket.horaOcupacion) : ticket.horaEntrada ? new Date(ticket.horaEntrada) : null;
+      canProceed = !!horaEntrada;
     } else if (ticket.estado === "pagado_pendiente") {
       console.log(`⏳ Ticket con pago pendiente: ${ticketCode}`);
       return NextResponse.json(
         {
           message: "Este ticket ya tiene un pago pendiente de validación. Espere la confirmación del personal.",
         },
-        { status: 404 },
+        { status: 404 }
       );
     }
 
-    if (!canProceed) {
+    if (canProceed && horaEntrada) {
+      isNightTariff = isNightTime(horaEntrada, nightStart, nightEnd);
+      if (pricingModel === "variable") {
+        montoCalculado = calculateParkingFee(
+          horaEntrada.toISOString(),
+          new Date().toISOString(),
+          precioHora,
+          precioHoraNoche,
+          nightStart,
+          nightEnd
+        );
+      } else {
+        montoCalculado = isNightTariff ? precioHoraNoche : precioHora;
+      }
+      montoCalculado = Number.parseFloat(montoCalculado.toFixed(2));
+      console.log(`💰 Ticket calculado - ${pricingModel} ${isNightTariff ? "(nocturna)" : "(diurna)"}: $${montoCalculado}`);
+    } else {
       console.log(`❌ No se puede proceder con ticket: ${ticketCode}, estado: ${ticket.estado}`);
       return NextResponse.json(
         {
           message: `Este ticket no está en un estado válido para realizar pagos. Estado actual: ${ticket.estado}`,
         },
-        { status: 404 },
+        { status: 404 }
       );
     }
 
@@ -160,8 +137,14 @@ export async function GET(request: Request, { params }: { params: { code: string
       montoCalculado,
       montoBs,
       tasaCambio,
+      precioHora,
+      precioHoraNoche,
+      nightStart,
+      nightEnd,
       ultimoPagoId: ticket.ultimoPagoId,
       carInfo,
+      pricingModel,
+      isNightTariff,
     };
 
     console.log(`✅ API ticket/[code] - Respuesta enviada para ${ticketCode}:`, JSON.stringify(response, null, 2));
