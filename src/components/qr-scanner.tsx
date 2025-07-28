@@ -4,11 +4,7 @@ import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Camera, X, Scan } from "lucide-react"
-// Eliminamos la importación dinámica de next/dynamic para QrScanner aquí
-// import dynamic from "next/dynamic"
-
-// Eliminamos la declaración de QrScanner como componente dinámico aquí
-// const QrScanner = dynamic(() => import("qr-scanner"), { ssr: false })
+import QrScanner from "qr-scanner"
 
 interface QRScannerProps {
   onScanSuccess: (ticketCode: string) => void
@@ -18,69 +14,49 @@ interface QRScannerProps {
 export default function QRScannerComponent({ onScanSuccess, onClose }: QRScannerProps) {
   const [isScanning, setIsScanning] = useState(false)
   const [error, setError] = useState("")
-  // QrScannerClass ahora almacenará directamente el constructor de la clase QrScanner
-  const [QrScannerClass, setQrScannerClass] = useState<any>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
-  const qrScannerRef = useRef<any>(null)
+  const qrScannerRef = useRef<QrScanner | null>(null)
 
   useEffect(() => {
-    // Cargar QrScanner dinámicamente solo cuando el componente se monta en el cliente
-    const loadQrScanner = async () => {
-      try {
-        // Importamos el módulo directamente para obtener el constructor de la clase
-        const QrScannerModule = await import("qr-scanner")
-        setQrScannerClass(QrScannerModule.default)
-      } catch (err) {
-        console.error("Error loading QR Scanner:", err)
-        setError("Error cargando el escáner QR")
-      }
-    }
-
-    loadQrScanner()
-
     return () => {
-      // Limpiar el escáner cuando el componente se desmonta
+      // Cleanup scanner when component unmounts
       if (qrScannerRef.current) {
         qrScannerRef.current.stop()
         qrScannerRef.current.destroy()
-        qrScannerRef.current = null
       }
     }
   }, [])
 
   const startScanning = async () => {
-    // Asegurarse de que QrScannerClass esté cargado y el elemento de video esté disponible
-    if (!videoRef.current || !QrScannerClass) {
-      setError("Escáner QR no cargado o cámara no disponible.")
-      return
-    }
+    if (!videoRef.current) return
 
     try {
       setIsScanning(true)
       setError("")
 
-      // Verificar si hay cámara disponible usando el método de la clase QrScanner
-      if (!QrScannerClass.hasCamera()) {
+      // Check if QrScanner is supported
+      if (!QrScanner.hasCamera()) {
         throw new Error("No se encontró cámara disponible")
       }
 
-      // Crear instancia del escáner QR usando el constructor de la clase
-      qrScannerRef.current = new QrScannerClass(
+      // Create QR scanner instance
+      qrScannerRef.current = new QrScanner(
         videoRef.current,
-        (result: any) => {
+        (result) => {
           console.log("QR Code detected:", result.data)
 
+          // Extract ticket code from URL or use direct code
           let ticketCode = result.data
 
-          // Si es una URL, extraer el código del ticket de la ruta
+          // If it's a URL, extract the ticket code from the path
           if (result.data.includes("/ticket/")) {
             const urlParts = result.data.split("/ticket/")
             if (urlParts.length > 1) {
-              ticketCode = urlParts[1].split("?")[0] // Eliminar parámetros de consulta si los hay
+              ticketCode = urlParts[1].split("?")[0] // Remove query parameters if any
             }
           }
 
-          // Detener el escaneo y llamar al callback de éxito
+          // Stop scanning and call success callback
           stopScanning()
           onScanSuccess(ticketCode)
         },
@@ -111,18 +87,6 @@ export default function QRScannerComponent({ onScanSuccess, onClose }: QRScanner
   const handleClose = () => {
     stopScanning()
     onClose()
-  }
-
-  // Mostrar un estado de carga mientras el escáner QR se está cargando
-  if (!QrScannerClass) {
-    return (
-      <Card className="w-full max-w-md mx-auto">
-        <CardContent className="pt-6 text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p>Cargando escáner QR...</p>
-        </CardContent>
-      </Card>
-    )
   }
 
   return (
