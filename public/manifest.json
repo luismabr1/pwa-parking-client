@@ -1,12 +1,12 @@
 {
-  "name": "Parking PWA - Sistema de Estacionamiento",
+  "name": "Parking PWA Client",
   "short_name": "Parking PWA",
-  "description": "Sistema completo de gestión de estacionamiento con pagos móviles",
+  "description": "Aplicación cliente para la gestión de estacionamientos PWA",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#000000",
-  "orientation": "portrait-primary",
+  "orientation": "portrait",
   "scope": "/",
   "lang": "es",
   "categories": ["business", "productivity", "utilities"],
@@ -45,7 +45,7 @@
       "src": "/logo.svg",
       "sizes": "192x192",
       "type": "image/svg+xml",
-      "purpose": "maskable any"
+      "purpose": "any maskable"
     },
     {
       "src": "/logo.svg",
@@ -57,7 +57,7 @@
       "src": "/logo.svg",
       "sizes": "512x512",
       "type": "image/svg+xml",
-      "purpose": "maskable any"
+      "purpose": "any maskable"
     }
   ],
   "shortcuts": [
@@ -90,18 +90,18 @@
   ],
   "screenshots": [
     {
-      "src": "/screenshot-mobile.svg",
-      "sizes": "390x844",
-      "type": "image/svg+xml",
-      "form_factor": "narrow",
-      "label": "Vista principal móvil - Búsqueda de tickets"
-    },
-    {
       "src": "/screenshot-desktop.svg",
-      "sizes": "1280x720",
+      "sizes": "1280x800",
       "type": "image/svg+xml",
       "form_factor": "wide",
-      "label": "Vista principal escritorio"
+      "label": "Vista de escritorio de la aplicación"
+    },
+    {
+      "src": "/screenshot-mobile.svg",
+      "sizes": "640x1136",
+      "type": "image/svg+xml",
+      "form_factor": "narrow",
+      "label": "Vista móvil de la aplicación"
     }
   ],
   "related_applications": [],

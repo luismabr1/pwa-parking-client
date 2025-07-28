@@ -4,10 +4,11 @@ import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Camera, X, Scan } from "lucide-react"
-import dynamic from "next/dynamic"
+// Eliminamos la importación dinámica de next/dynamic para QrScanner aquí
+// import dynamic from "next/dynamic"
 
-// Dynamic import para evitar problemas con Turbopack
-const QrScanner = dynamic(() => import("qr-scanner"), { ssr: false })
+// Eliminamos la declaración de QrScanner como componente dinámico aquí
+// const QrScanner = dynamic(() => import("qr-scanner"), { ssr: false })
 
 interface QRScannerProps {
   onScanSuccess: (ticketCode: string) => void
@@ -17,14 +18,16 @@ interface QRScannerProps {
 export default function QRScannerComponent({ onScanSuccess, onClose }: QRScannerProps) {
   const [isScanning, setIsScanning] = useState(false)
   const [error, setError] = useState("")
+  // QrScannerClass ahora almacenará directamente el constructor de la clase QrScanner
   const [QrScannerClass, setQrScannerClass] = useState<any>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
   const qrScannerRef = useRef<any>(null)
 
   useEffect(() => {
-    // Cargar QrScanner dinámicamente
+    // Cargar QrScanner dinámicamente solo cuando el componente se monta en el cliente
     const loadQrScanner = async () => {
       try {
+        // Importamos el módulo directamente para obtener el constructor de la clase
         const QrScannerModule = await import("qr-scanner")
         setQrScannerClass(QrScannerModule.default)
       } catch (err) {
@@ -36,44 +39,48 @@ export default function QRScannerComponent({ onScanSuccess, onClose }: QRScanner
     loadQrScanner()
 
     return () => {
-      // Cleanup scanner when component unmounts
+      // Limpiar el escáner cuando el componente se desmonta
       if (qrScannerRef.current) {
         qrScannerRef.current.stop()
         qrScannerRef.current.destroy()
+        qrScannerRef.current = null
       }
     }
   }, [])
 
   const startScanning = async () => {
-    if (!videoRef.current || !QrScannerClass) return
+    // Asegurarse de que QrScannerClass esté cargado y el elemento de video esté disponible
+    if (!videoRef.current || !QrScannerClass) {
+      setError("Escáner QR no cargado o cámara no disponible.")
+      return
+    }
 
     try {
       setIsScanning(true)
       setError("")
 
-      // Check if QrScanner is supported
+      // Verificar si hay cámara disponible usando el método de la clase QrScanner
       if (!QrScannerClass.hasCamera()) {
         throw new Error("No se encontró cámara disponible")
       }
 
-      // Create QR scanner instance
+      // Crear instancia del escáner QR usando el constructor de la clase
       qrScannerRef.current = new QrScannerClass(
         videoRef.current,
         (result: any) => {
           console.log("QR Code detected:", result.data)
 
-          // Extract ticket code from URL or use direct code
           let ticketCode = result.data
 
-          // If it's a URL, extract the ticket code from the path
+          // Si es una URL, extraer el código del ticket de la ruta
           if (result.data.includes("/ticket/")) {
             const urlParts = result.data.split("/ticket/")
             if (urlParts.length > 1) {
-              ticketCode = urlParts[1].split("?")[0] // Remove query parameters if any
+              ticketCode = urlParts[1].split("?")[0] // Eliminar parámetros de consulta si los hay
             }
           }
 
-          // Stop scanning and call success callback
+          // Detener el escaneo y llamar al callback de éxito
           stopScanning()
           onScanSuccess(ticketCode)
         },
@@ -106,6 +113,7 @@ export default function QRScannerComponent({ onScanSuccess, onClose }: QRScanner
     onClose()
   }
 
+  // Mostrar un estado de carga mientras el escáner QR se está cargando
   if (!QrScannerClass) {
     return (
       <Card className="w-full max-w-md mx-auto">
