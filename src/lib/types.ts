@@ -122,3 +122,73 @@ export interface CarHistory {
     observaciones?: string
   }
 }
+
+// Nuevas interfaces para el sistema de logging de seguridad
+export interface SecurityLog {
+  _id?: string
+  timestamp: Date
+  level: "INFO" | "WARNING" | "CRITICAL" | "BLOCKED"
+  type: "RATE_LIMIT" | "SUSPICIOUS_ACTIVITY" | "INVALID_ORIGIN" | "MALICIOUS_REQUEST" | "SYSTEM_ERROR" | "ACCESS_DENIED"
+  clientIP: string
+  endpoint: string
+  method: string
+  userAgent?: string
+  origin?: string
+  referer?: string
+
+  // Detalles específicos del evento
+  details: {
+    message: string
+    rateLimitInfo?: {
+      maxRequests: number
+      currentCount: number
+      windowMs: number
+      blocked: boolean
+      blockDuration?: number
+    }
+    suspiciousReasons?: string[]
+    requestData?: any
+    errorDetails?: string
+    geoLocation?: {
+      country?: string
+      city?: string
+      region?: string
+    }
+  }
+
+  // Información adicional para análisis
+  metadata: {
+    processingTime?: number
+    responseStatus?: number
+    sessionId?: string
+    fingerprint?: string
+  }
+
+  // Estado del log
+  status: "ACTIVE" | "RESOLVED" | "IGNORED"
+  resolvedBy?: string
+  resolvedAt?: Date
+  notes?: string
+}
+
+export interface SecurityStats {
+  _id?: string
+  date: string // YYYY-MM-DD
+  totalRequests: number
+  blockedRequests: number
+  suspiciousActivity: number
+  uniqueIPs: number
+  blockedIPs: string[]
+  topEndpoints: Array<{
+    endpoint: string
+    count: number
+    blocked: number
+  }>
+  topUserAgents: Array<{
+    userAgent: string
+    count: number
+    suspicious: boolean
+  }>
+  createdAt: Date
+  updatedAt: Date
+}

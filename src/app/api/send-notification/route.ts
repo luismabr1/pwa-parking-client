@@ -1,6 +1,7 @@
-import { NextResponse } from "next/server"
+import { type NextRequest, NextResponse } from "next/server"
 import clientPromise from "@/lib/mongodb"
 import webpush from "web-push"
+import { withSecurity } from "@/lib/security-middleware"
 
 // Configurar web-push con las claves VAPID
 const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
@@ -12,11 +13,9 @@ if (vapidPublicKey && vapidPrivateKey) {
   console.log("✅ [SEND-NOTIFICATION] VAPID configurado correctamente")
 } else {
   console.error("❌ [SEND-NOTIFICATION] Claves VAPID no configuradas")
-  console.error("   VAPID_PUBLIC_KEY:", vapidPublicKey ? "✅ Configurada" : "❌ Faltante")
-  console.error("   VAPID_PRIVATE_KEY:", vapidPrivateKey ? "✅ Configurada" : "❌ Faltante")
 }
 
-export async function POST(request: Request) {
+async function sendNotificationHandler(request: NextRequest, sanitizedData: any) {
   try {
     console.log("🔔 [SEND-NOTIFICATION] ===== ENVIANDO NOTIFICACIÓN =====")
 
@@ -25,13 +24,29 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "Servicio de notificaciones no configurado" }, { status: 500 })
     }
 
-    const { type, userType, ticketCode, data } = await request.json()
+    const { type, userType, ticketCode, data } = sanitizedData
+
+    // Validar datos básicos
+    if (!type || !userType) {
+      return NextResponse.json({ message: "Tipo y userType son requeridos" }, { status: 400 })
+    }
+
+    // Validar tipos permitidos
+    const allowedTypes = ["test", "admin_payment", "payment_validated", "payment_rejected"]
+    const allowedUserTypes = ["user", "admin"]
+
+    if (!allowedTypes.includes(type)) {
+      return NextResponse.json({ message: "Tipo de notificación no válido" }, { status: 400 })
+    }
+
+    if (!allowedUserTypes.includes(userType)) {
+      return NextResponse.json({ message: "Tipo de usuario no válido" }, { status: 400 })
+    }
 
     console.log("📦 [SEND-NOTIFICATION] Datos recibidos:")
     console.log("   Type:", type)
     console.log("   UserType:", userType)
     console.log("   TicketCode:", ticketCode)
-    console.log("   Data:", data)
 
     const client = await clientPromise
     const db = client.db("parking")
@@ -166,4 +181,13 @@ export async function POST(request: Request) {
     console.error("❌ [SEND-NOTIFICATION] Error general:", error)
     return NextResponse.json({ message: "Error enviando notificaciones" }, { status: 500 })
   }
+}
+
+export async function POST(request: NextRequest) {
+  return withSecurity(request, sendNotificationHandler, {
+    rateLimitType: "NOTIFICATION",
+    requireValidOrigin: true,
+    sanitizeBody: true,
+    logRequests: true,
+  })
 }

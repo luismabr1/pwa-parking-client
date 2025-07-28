@@ -1,6 +1,14 @@
-import { NextResponse } from "next/server"
+import { type NextRequest, NextResponse } from "next/server"
 import clientPromise from "@/lib/mongodb"
 import { v2 as cloudinary } from "cloudinary"
+import { withSecurity } from "@/lib/security-middleware"
+import {
+  validatePaymentData,
+  validatePaymentReference,
+  validateAmount,
+  validatePhoneNumber,
+} from "@/lib/security-utils"
+import { logSecurityEvent } from "@/lib/security-logger"
 
 // Configure Cloudinary
 cloudinary.config({
@@ -43,33 +51,66 @@ async function uploadImageToCloudinary(base64Image: string, ticketCode: string):
   }
 }
 
-export async function POST(request: Request) {
+async function processPaymentHandler(request: NextRequest, sanitizedData: any) {
   const startTime = Date.now()
+  const clientIP = request.headers.get("x-forwarded-for")?.split(",")[0] || "unknown"
 
   try {
     console.log("💰 [PROCESS-PAYMENT] ===== INICIANDO PROCESO DE PAGO =====")
     console.log("🕐 [PROCESS-PAYMENT] Timestamp:", new Date().toISOString())
 
+    // Validar datos de pago
+    const validation = validatePaymentData(sanitizedData)
+    if (!validation.valid) {
+      console.error("❌ [PROCESS-PAYMENT] Validación fallida:", validation.errors)
+      return NextResponse.json(
+        {
+          message: "Datos de pago inválidos",
+          errors: validation.errors,
+        },
+        { status: 400 },
+      )
+    }
+
+    // Validaciones de seguridad adicionales
+    if (!validatePaymentReference(sanitizedData.numeroReferencia)) {
+      await logSecurityEvent.maliciousRequest(
+        clientIP,
+        "/api/process-payment",
+        "POST",
+        "Formato de referencia de pago inválido",
+        { numeroReferencia: sanitizedData.numeroReferencia },
+        request.headers.get("user-agent") || "",
+      )
+      return NextResponse.json({ message: "Formato de referencia inválido" }, { status: 400 })
+    }
+
+    if (!validateAmount(sanitizedData.monto)) {
+      await logSecurityEvent.maliciousRequest(
+        clientIP,
+        "/api/process-payment",
+        "POST",
+        "Monto de pago inválido o sospechoso",
+        { monto: sanitizedData.monto },
+        request.headers.get("user-agent") || "",
+      )
+      return NextResponse.json({ message: "Monto inválido" }, { status: 400 })
+    }
+
+    if (sanitizedData.telefono && !validatePhoneNumber(sanitizedData.telefono)) {
+      await logSecurityEvent.maliciousRequest(
+        clientIP,
+        "/api/process-payment",
+        "POST",
+        "Formato de teléfono inválido",
+        { telefono: sanitizedData.telefono },
+        request.headers.get("user-agent") || "",
+      )
+      return NextResponse.json({ message: "Formato de teléfono inválido" }, { status: 400 })
+    }
+
     const client = await clientPromise
     const db = client.db("parking")
-
-    let requestBody
-    try {
-      requestBody = await request.json()
-      console.log("📥 [PROCESS-PAYMENT] Datos recibidos:")
-      console.log("   Código Ticket:", requestBody.codigoTicket)
-      console.log("   Tipo Pago:", requestBody.tipoPago)
-      console.log("   Monto Pagado:", requestBody.montoPagado)
-      console.log("   Tiempo Salida:", requestBody.tiempoSalida)
-      console.log("   Tiene Imagen:", !!requestBody.imagenComprobante)
-      console.log("   Referencia:", requestBody.referenciaTransferencia || "N/A")
-      console.log("   Banco:", requestBody.banco || "N/A")
-      console.log("   Teléfono:", requestBody.telefono || "N/A")
-      console.log("   Número ID:", requestBody.numeroIdentidad || "N/A")
-    } catch (error) {
-      console.error("❌ [PROCESS-PAYMENT] Error parsing JSON:", error)
-      return NextResponse.json({ message: "Datos JSON inválidos" }, { status: 400 })
-    }
 
     const {
       codigoTicket,
@@ -81,35 +122,14 @@ export async function POST(request: Request) {
       montoPagado,
       tiempoSalida,
       imagenComprobante,
-    } = requestBody
+    } = sanitizedData
 
-    // Validación detallada de campos requeridos
-    console.log("🔍 [PROCESS-PAYMENT] Validando campos requeridos...")
-    console.log("   codigoTicket:", codigoTicket ? "✅" : "❌")
-    console.log("   tipoPago:", tipoPago ? "✅" : "❌")
-    console.log("   montoPagado:", montoPagado > 0 ? "✅" : "❌", `(${montoPagado})`)
-    console.log("   tiempoSalida:", tiempoSalida ? "✅" : "❌")
-
-    if (!codigoTicket || !tipoPago || montoPagado === undefined || montoPagado <= 0) {
-      const errorMsg = "Código de ticket, tipo de pago y monto válido son requeridos"
-      console.error("❌ [PROCESS-PAYMENT] Validación fallida:", errorMsg)
-      return NextResponse.json({ message: errorMsg }, { status: 400 })
-    }
-
-    // Validación específica para pagos electrónicos
-    if (tipoPago === "pago_movil" || tipoPago === "transferencia") {
-      console.log("🔍 [PROCESS-PAYMENT] Validando campos para pago electrónico...")
-      console.log("   referenciaTransferencia:", referenciaTransferencia?.trim() ? "✅" : "❌")
-      console.log("   banco:", banco?.trim() ? "✅" : "❌")
-      console.log("   telefono:", telefono?.trim() ? "✅" : "❌")
-      console.log("   numeroIdentidad:", numeroIdentidad?.trim() ? "✅" : "❌")
-
-      if (!referenciaTransferencia?.trim() || !banco?.trim() || !telefono?.trim() || !numeroIdentidad?.trim()) {
-        const errorMsg = "Todos los campos son requeridos y no pueden estar vacíos para pagos electrónicos"
-        console.error("❌ [PROCESS-PAYMENT] Validación de pago electrónico fallida:", errorMsg)
-        return NextResponse.json({ message: errorMsg }, { status: 400 })
-      }
-    }
+    console.log("📥 [PROCESS-PAYMENT] Datos validados:")
+    console.log("   Código Ticket:", codigoTicket)
+    console.log("   Tipo Pago:", tipoPago)
+    console.log("   Monto Pagado:", montoPagado)
+    console.log("   Tiempo Salida:", tiempoSalida)
+    console.log("   Tiene Imagen:", !!imagenComprobante)
 
     // Buscar ticket
     console.log("🎫 [PROCESS-PAYMENT] Buscando ticket:", codigoTicket)
@@ -125,15 +145,9 @@ export async function POST(request: Request) {
     console.log("   Código:", ticket.codigoTicket)
     console.log("   Estado:", ticket.estado)
     console.log("   Monto Calculado:", ticket.montoCalculado)
-    console.log("   Hora Entrada:", ticket.horaEntrada)
 
     // Validar estado del ticket - Estados válidos para pago
     const estadosValidosParaPago = ["activo", "ocupado", "validado", "estacionado", "estacionado_confirmado"]
-
-    console.log("🔍 [PROCESS-PAYMENT] Validando estado del ticket...")
-    console.log("   Estado actual:", ticket.estado)
-    console.log("   Estados válidos:", estadosValidosParaPago)
-    console.log("   Es válido:", estadosValidosParaPago.includes(ticket.estado) ? "✅" : "❌")
 
     if (!estadosValidosParaPago.includes(ticket.estado)) {
       let errorMsg = "Este ticket no está disponible para pago"
@@ -217,8 +231,6 @@ export async function POST(request: Request) {
     console.log("   Monto pagado (Bs):", montoEnBs)
     console.log("   Monto calculado (Bs):", montoCalculadoBs)
     console.log("   Diferencia:", Math.abs(montoEnBs - montoCalculadoBs))
-    console.log("   Tolerancia:", tolerance)
-    console.log("   Es efectivo:", tipoPago.startsWith("efectivo"))
 
     if (
       Math.abs(montoEnBs - montoCalculadoBs) > tolerance &&
@@ -246,11 +258,7 @@ export async function POST(request: Request) {
     })
 
     if (car) {
-      console.log("✅ [PROCESS-PAYMENT] Carro encontrado:")
-      console.log("   Placa:", car.placa)
-      console.log("   Estado:", car.estado)
-      console.log("   Propietario:", car.nombreDueño || "N/A")
-      console.log("   Marca/Modelo:", `${car.marca} ${car.modelo}`.trim() || "N/A")
+      console.log("✅ [PROCESS-PAYMENT] Carro encontrado:", car.placa)
     } else {
       console.log("⚠️ [PROCESS-PAYMENT] No se encontró carro asociado al ticket")
     }
@@ -304,11 +312,6 @@ export async function POST(request: Request) {
     }
 
     console.log("💾 [PROCESS-PAYMENT] Guardando pago en base de datos...")
-    console.log("   Tipo de pago:", pagoData.tipoPago)
-    console.log("   Monto (Bs):", pagoData.montoPagado)
-    console.log("   Monto (USD):", pagoData.montoPagadoUsd)
-    console.log("   Estado:", pagoData.estado)
-    console.log("   Imagen comprobante:", urlImagenComprobante ? "✅ Sí" : "❌ No")
 
     const pagoResult = await db.collection("pagos").insertOne(pagoData)
 
@@ -335,7 +338,7 @@ export async function POST(request: Request) {
       },
     )
 
-    console.log("✅ [PROCESS-PAYMENT] Ticket actualizado - Documentos modificados:", ticketUpdateResult.modifiedCount)
+    console.log("✅ [PROCESS-PAYMENT] Ticket actualizado")
 
     // Actualizar carro si existe
     if (car) {
@@ -343,10 +346,7 @@ export async function POST(request: Request) {
 
       console.log("🚗 [PROCESS-PAYMENT] Actualizando estado del carro a:", nuevoEstadoCarro)
 
-      const carUpdateResult = await db
-        .collection("cars")
-        .updateOne({ _id: car._id }, { $set: { estado: nuevoEstadoCarro } })
-      console.log("✅ [PROCESS-PAYMENT] Carro actualizado - Documentos modificados:", carUpdateResult.modifiedCount)
+      await db.collection("cars").updateOne({ _id: car._id }, { $set: { estado: nuevoEstadoCarro } })
     }
 
     // Actualizar car_history
@@ -354,7 +354,7 @@ export async function POST(request: Request) {
     if (carId) {
       console.log("📚 [PROCESS-PAYMENT] Actualizando historial del carro...")
 
-      const updateResult = await db.collection("car_history").updateOne(
+      await db.collection("car_history").updateOne(
         { carId },
         {
           $push: {
@@ -387,21 +387,11 @@ export async function POST(request: Request) {
           },
         },
       )
-
-      console.log(`✅ [PROCESS-PAYMENT] Historial actualizado - Documentos modificados: ${updateResult.modifiedCount}`)
-    } else {
-      console.warn(
-        `⚠️ [PROCESS-PAYMENT] No se encontró carro para el ticket ${codigoTicket}, omitiendo actualización de historial`,
-      )
     }
 
     // Enviar notificación push a administradores
     try {
       console.log("📱 [PROCESS-PAYMENT] Enviando notificación push a administradores...")
-      console.log(
-        "   URL de notificación:",
-        `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/api/send-notification`,
-      )
 
       const notificationPayload = {
         type: "admin_payment",
@@ -420,8 +410,6 @@ export async function POST(request: Request) {
         },
       }
 
-      console.log("📦 [PROCESS-PAYMENT] Payload de notificación:", notificationPayload)
-
       const notificationResponse = await fetch(
         `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/api/send-notification`,
         {
@@ -431,19 +419,9 @@ export async function POST(request: Request) {
         },
       )
 
-      console.log("📡 [PROCESS-PAYMENT] Respuesta de notificación admin:")
-      console.log("   Status:", notificationResponse.status)
-      console.log("   OK:", notificationResponse.ok)
-
-      if (!notificationResponse.ok) {
-        const errorText = await notificationResponse.text()
-        console.error("❌ [PROCESS-PAYMENT] Error en notificación admin:", errorText)
-      } else {
+      if (notificationResponse.ok) {
         const responseData = await notificationResponse.json()
-        console.log("✅ [PROCESS-PAYMENT] Notificación admin enviada exitosamente:")
-        console.log("   Enviadas:", responseData.sent)
-        console.log("   Total:", responseData.total)
-        console.log("   Mensaje:", responseData.message)
+        console.log("✅ [PROCESS-PAYMENT] Notificación admin enviada:", responseData.sent)
       }
     } catch (notificationError) {
       console.error("❌ [PROCESS-PAYMENT] Error enviando notificación push:", notificationError)
@@ -454,13 +432,6 @@ export async function POST(request: Request) {
 
     console.log("🎉 [PROCESS-PAYMENT] ===== PAGO PROCESADO EXITOSAMENTE =====")
     console.log("   Tiempo de procesamiento:", processingTime + "ms")
-    console.log("   ID del pago:", pagoResult.insertedId)
-    console.log("   Tipo de pago:", tipoPago)
-    console.log("   Monto (Bs):", montoEnBs)
-    console.log("   Monto (USD):", montoEnUsd)
-    console.log("   Requiere validación:", !tipoPago.startsWith("efectivo"))
-    console.log("   Tiempo de salida:", tiempoSalida || "now")
-    console.log("   Tiene comprobante:", !!urlImagenComprobante)
 
     const response = NextResponse.json({
       message: "Pago registrado exitosamente",
@@ -486,7 +457,6 @@ export async function POST(request: Request) {
     console.error("❌ [PROCESS-PAYMENT] ===== ERROR CRÍTICO =====")
     console.error("   Tiempo transcurrido:", processingTime + "ms")
     console.error("   Error:", error.message)
-    console.error("   Stack trace:", error.stack)
 
     return NextResponse.json(
       {
@@ -497,4 +467,13 @@ export async function POST(request: Request) {
       { status: 500 },
     )
   }
+}
+
+export async function POST(request: NextRequest) {
+  return withSecurity(request, processPaymentHandler, {
+    rateLimitType: "CRITICAL",
+    requireValidOrigin: true,
+    sanitizeBody: true,
+    logRequests: true,
+  })
 }

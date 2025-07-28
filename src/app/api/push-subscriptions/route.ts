@@ -1,11 +1,12 @@
-import { NextResponse } from "next/server"
+import { type NextRequest, NextResponse } from "next/server"
 import clientPromise from "@/lib/mongodb"
+import { withSecurity } from "@/lib/security-middleware"
 
-export async function POST(request: Request) {
+async function createSubscriptionHandler(request: NextRequest, sanitizedData: any) {
   try {
     console.log("📱 [PUSH-SUBSCRIPTIONS] ===== REGISTRANDO SUSCRIPCIÓN =====")
 
-    const { subscription, userType, ticketCode } = await request.json()
+    const { subscription, userType, ticketCode } = sanitizedData
 
     console.log("📦 [PUSH-SUBSCRIPTIONS] Datos recibidos:")
     console.log("   UserType:", userType)
@@ -14,6 +15,16 @@ export async function POST(request: Request) {
 
     if (!subscription || !userType) {
       return NextResponse.json({ message: "Suscripción y tipo de usuario son requeridos" }, { status: 400 })
+    }
+
+    // Validar userType
+    if (!["user", "admin"].includes(userType)) {
+      return NextResponse.json({ message: "Tipo de usuario inválido" }, { status: 400 })
+    }
+
+    // Validar estructura de subscription
+    if (!subscription.endpoint || !subscription.keys) {
+      return NextResponse.json({ message: "Estructura de suscripción inválida" }, { status: 400 })
     }
 
     const client = await clientPromise
@@ -75,11 +86,11 @@ export async function POST(request: Request) {
   }
 }
 
-export async function DELETE(request: Request) {
+async function deleteSubscriptionHandler(request: NextRequest, sanitizedData: any) {
   try {
     console.log("🗑️ [PUSH-SUBSCRIPTIONS] ===== ELIMINANDO SUSCRIPCIÓN =====")
 
-    const { endpoint } = await request.json()
+    const { endpoint } = sanitizedData
 
     if (!endpoint) {
       return NextResponse.json({ message: "Endpoint es requerido" }, { status: 400 })
@@ -100,4 +111,22 @@ export async function DELETE(request: Request) {
     console.error("❌ [PUSH-SUBSCRIPTIONS] Error eliminando:", error)
     return NextResponse.json({ message: "Error interno del servidor" }, { status: 500 })
   }
+}
+
+export async function POST(request: NextRequest) {
+  return withSecurity(request, createSubscriptionHandler, {
+    rateLimitType: "NOTIFICATION",
+    requireValidOrigin: true,
+    sanitizeBody: true,
+    logRequests: true,
+  })
+}
+
+export async function DELETE(request: NextRequest) {
+  return withSecurity(request, deleteSubscriptionHandler, {
+    rateLimitType: "NOTIFICATION",
+    requireValidOrigin: true,
+    sanitizeBody: true,
+    logRequests: true,
+  })
 }
