@@ -16,27 +16,34 @@ export default function PWAInstallPrompt() {
   const [isIOS, setIsIOS] = useState(false)
 
   useEffect(() => {
+    console.log("PWAInstallPrompt: useEffect running")
+
     // Detectar iOS
     const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream
     setIsIOS(isIOSDevice)
+    console.log("PWAInstallPrompt: isIOSDevice =", isIOSDevice)
 
     // Check if app is already installed
     if (window.matchMedia("(display-mode: standalone)").matches) {
       setIsInstalled(true)
+      console.log("PWAInstallPrompt: App is already installed (standalone mode).")
       return
     }
 
     // Check if user has already dismissed the install prompt permanently
     const hasBeenDismissed = localStorage.getItem("pwa-install-dismissed")
     if (hasBeenDismissed) {
+      console.log("PWAInstallPrompt: Install prompt has been permanently dismissed.")
       return
     }
 
-    // Para iOS, mostrar banner después de un delay
+    // For iOS, show banner after a delay
     if (isIOSDevice) {
+      console.log("PWAInstallPrompt: iOS device detected. Scheduling banner show.")
       const timer = setTimeout(() => {
         setShowBanner(true)
-      }, 8000) // Mostrar después de 8 segundos
+        console.log("PWAInstallPrompt: iOS banner shown after delay.")
+      }, 8000) // Show after 8 seconds
       return () => clearTimeout(timer)
     }
 
@@ -44,11 +51,9 @@ export default function PWAInstallPrompt() {
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault()
       setDeferredPrompt(e as BeforeInstallPromptEvent)
-
-      // Mostrar banner después de un delay
-      setTimeout(() => {
-        setShowBanner(true)
-      }, 5000)
+      console.log("PWAInstallPrompt: beforeinstallprompt event fired.")
+      // Show banner immediately when prompt is available
+      setShowBanner(true)
     }
 
     // Listen for app installed event
@@ -57,6 +62,7 @@ export default function PWAInstallPrompt() {
       setShowBanner(false)
       setDeferredPrompt(null)
       localStorage.removeItem("pwa-install-dismissed")
+      console.log("PWAInstallPrompt: App installed event fired.")
     }
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt)
@@ -69,7 +75,9 @@ export default function PWAInstallPrompt() {
   }, [])
 
   const handleInstallClick = async () => {
+    console.log("PWAInstallPrompt: Install button clicked.")
     if (!deferredPrompt && !isIOS) {
+      console.log("PWAInstallPrompt: No deferredPrompt and not iOS. Cannot install.")
       return
     }
 
@@ -79,33 +87,37 @@ export default function PWAInstallPrompt() {
         const { outcome } = await deferredPrompt.userChoice
 
         if (outcome === "accepted") {
-          console.log("User accepted the install prompt")
+          console.log("PWAInstallPrompt: User accepted the install prompt.")
           setShowBanner(false)
         } else {
-          console.log("User dismissed the install prompt")
+          console.log("PWAInstallPrompt: User dismissed the install prompt.")
         }
 
         setDeferredPrompt(null)
       } catch (error) {
-        console.error("Error during installation:", error)
+        console.error("PWAInstallPrompt: Error during installation:", error)
       }
     }
   }
 
   const handleDismiss = () => {
+    console.log("PWAInstallPrompt: Dismiss button clicked.")
     setShowBanner(false)
   }
 
   const handleDismissPermanently = () => {
+    console.log("PWAInstallPrompt: Dismiss permanently button clicked.")
     localStorage.setItem("pwa-install-dismissed", "true")
     setShowBanner(false)
   }
 
   // Don't show if already installed or not ready
   if (isInstalled || !showBanner) {
+    console.log("PWAInstallPrompt: Not showing banner. isInstalled:", isInstalled, "showBanner:", showBanner)
     return null
   }
 
+  console.log("PWAInstallPrompt: Rendering banner.")
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border shadow-lg">
       <div className="max-w-md mx-auto p-4">
@@ -123,7 +135,11 @@ export default function PWAInstallPrompt() {
 
           <div className="flex items-center gap-2">
             {!isIOS && deferredPrompt && (
-              <Button onClick={handleInstallClick} size="sm" className="text-xs px-3">
+              <Button
+                onClick={handleInstallClick}
+                size="sm"
+                className="text-xs px-3 bg-primary text-primary-foreground hover:bg-primary/90"
+              >
                 <Download className="h-3 w-3 mr-1" />
                 Instalar
               </Button>

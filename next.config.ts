@@ -1,4 +1,4 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from "next"
 
 const nextConfig: NextConfig = {
   eslint: {
@@ -17,13 +17,11 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  experimental: {
-    turbo: {
-      resolveAlias: {
-        "@": "./src",
-      },
+  // Configuración corregida para Turbopack
+  turbopack: {
+    resolveAlias: {
+      "@": "./src",
     },
-    optimizePackageImports: ["lucide-react", "@radix-ui/react-toast"],
   },
   serverExternalPackages: ["mongodb"],
   async headers() {
@@ -41,7 +39,7 @@ const nextConfig: NextConfig = {
         source: "/_next/static/(.*)",
         headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
       },
-    ];
+    ]
   },
   async rewrites() {
     return [
@@ -53,14 +51,13 @@ const nextConfig: NextConfig = {
         source: "/manifest.json",
         destination: "/manifest.json",
       },
-    ];
+    ]
   },
   onDemandEntries: {
     maxInactiveAge: 25 * 1000,
     pagesBufferLength: 2,
   },
-  // Forzar Webpack en desarrollo
-  webpack: (config) => config, // Mantener la configuración mínima de Webpack
-};
+  // Remover la configuración de webpack ya que estamos usando Turbopack
+}
 
-export default nextConfig;
+export default nextConfig

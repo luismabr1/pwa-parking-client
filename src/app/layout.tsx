@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/theme/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
 import { Toaster as Sonner } from "@/components/ui/sonner"
 import { APP_CONFIG, getLogoSrc } from "@/config/app-config"
+import { Analytics } from "@vercel/analytics/next"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -153,6 +154,7 @@ export default function RootLayout({
           {children}
           <Toaster />
           <Sonner />
+          <Analytics />
         </ThemeProvider>
       </body>
     </html>

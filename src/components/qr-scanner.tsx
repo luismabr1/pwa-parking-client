@@ -4,7 +4,10 @@ import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Camera, X, Scan } from "lucide-react"
-import QrScanner from "qr-scanner"
+import dynamic from "next/dynamic"
+
+// Dynamic import para evitar problemas con Turbopack
+const QrScanner = dynamic(() => import("qr-scanner"), { ssr: false })
 
 interface QRScannerProps {
   onScanSuccess: (ticketCode: string) => void
@@ -14,10 +17,24 @@ interface QRScannerProps {
 export default function QRScannerComponent({ onScanSuccess, onClose }: QRScannerProps) {
   const [isScanning, setIsScanning] = useState(false)
   const [error, setError] = useState("")
+  const [QrScannerClass, setQrScannerClass] = useState<any>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
-  const qrScannerRef = useRef<QrScanner | null>(null)
+  const qrScannerRef = useRef<any>(null)
 
   useEffect(() => {
+    // Cargar QrScanner dinámicamente
+    const loadQrScanner = async () => {
+      try {
+        const QrScannerModule = await import("qr-scanner")
+        setQrScannerClass(QrScannerModule.default)
+      } catch (err) {
+        console.error("Error loading QR Scanner:", err)
+        setError("Error cargando el escáner QR")
+      }
+    }
+
+    loadQrScanner()
+
     return () => {
       // Cleanup scanner when component unmounts
       if (qrScannerRef.current) {
@@ -28,21 +45,21 @@ export default function QRScannerComponent({ onScanSuccess, onClose }: QRScanner
   }, [])
 
   const startScanning = async () => {
-    if (!videoRef.current) return
+    if (!videoRef.current || !QrScannerClass) return
 
     try {
       setIsScanning(true)
       setError("")
 
       // Check if QrScanner is supported
-      if (!QrScanner.hasCamera()) {
+      if (!QrScannerClass.hasCamera()) {
         throw new Error("No se encontró cámara disponible")
       }
 
       // Create QR scanner instance
-      qrScannerRef.current = new QrScanner(
+      qrScannerRef.current = new QrScannerClass(
         videoRef.current,
-        (result) => {
+        (result: any) => {
           console.log("QR Code detected:", result.data)
 
           // Extract ticket code from URL or use direct code
@@ -87,6 +104,17 @@ export default function QRScannerComponent({ onScanSuccess, onClose }: QRScanner
   const handleClose = () => {
     stopScanning()
     onClose()
+  }
+
+  if (!QrScannerClass) {
+    return (
+      <Card className="w-full max-w-md mx-auto">
+        <CardContent className="pt-6 text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>Cargando escáner QR...</p>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (
