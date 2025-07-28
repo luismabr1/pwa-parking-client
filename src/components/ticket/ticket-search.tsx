@@ -37,11 +37,24 @@ export default function TicketSearch() {
       console.log(`🔍 Búsqueda: Verificando ticket ${cleanTicketCode}`)
 
       const response = await fetch(`/api/ticket/${cleanTicketCode}`)
+      console.log(`🔍 Búsqueda: Enviando solicitud a /api/ticket/${cleanTicketCode}`)
+      console.log(`🔍 Búsqueda: Respuesta del servidor: ${response.status} ${response.statusText}`)
+
 
       if (response.ok) {
-        const ticket = await response.json()
-        console.log(`✅ Búsqueda: Ticket encontrado, redirigiendo a: /ticket/${ticket.codigoTicket}`)
-        router.push(`/ticket/${ticket.codigoTicket}`)
+        const data = await response.json() // Obtener la respuesta completa
+        console.log(`✅ Búsqueda: Ticket encontrado22:`, data)
+        const foundTicketCode = data.ticket?.codigoTicket // Acceder a la propiedad anidada
+        console.log(`✅ Búsqueda: Código de ticket encontrado: ${foundTicketCode}`)
+
+        if (foundTicketCode) {
+          console.log(`✅ Búsqueda: Ticket encontrado, redirigiendo a: /ticket/${foundTicketCode}`)
+          router.push(`/ticket/${foundTicketCode}`)
+        } else {
+          // Esto debería ocurrir si la API devuelve 200 pero sin codigoTicket válido
+          setError("Ticket encontrado, pero código no disponible para redirección.")
+          console.error("❌ Búsqueda: API devolvió datos inesperados:", data)
+        }
       } else {
         const errorData = await response.json()
         console.log(`❌ Búsqueda: Error para ${cleanTicketCode}:`, errorData)

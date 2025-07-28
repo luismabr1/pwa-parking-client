@@ -11,11 +11,11 @@ import PaymentForm from "@/components/payment-form"
 import Link from "next/link"
 import type { Ticket } from "@/lib/types"
 
-// Updated interface to include montoBs, tasaCambio, pricingModel, and isNightTariff
+// Updated interface to include montoBs, tasaCambio, and isNightTariff
+// Removed pricingModel as it's read from env var
 interface TicketWithBs extends Ticket {
   montoBs?: number
   tasaCambio?: number
-  pricingModel?: "variable" | "fija"
   isNightTariff?: boolean
   nightStart?: string
   nightEnd?: string
@@ -29,9 +29,15 @@ export default function TicketDetailsPage() {
   const [error, setError] = useState("")
   const [showPaymentForm, setShowPaymentForm] = useState(false)
 
+  // Read pricing model directly from environment variable
+  const pricingModel = process.env.NEXT_PUBLIC_PRICING_MODEL || "variable" // Default to 'variable' if not set
+
   useEffect(() => {
     if (ticketCode) {
       fetchTicketDetails()
+    } else {
+      setIsLoading(false)
+      setError("Código de ticket no proporcionado en la URL.")
     }
   }, [ticketCode])
 
@@ -49,7 +55,7 @@ export default function TicketDetailsPage() {
       if (response.ok) {
         const ticketData = await response.json()
         console.log(`✅ Página: Datos recibidos para ${ticketCode}:`, ticketData)
-        setTicket(ticketData)
+        setTicket(ticketData.ticket)
       } else {
         const errorData = await response.json()
         console.log(`❌ Página: Error para ${ticketCode}:`, errorData)
@@ -67,7 +73,7 @@ export default function TicketDetailsPage() {
     fetchTicketDetails()
   }
 
-  if (isLoading) {
+  if (isLoading && ticketCode) {
     return (
       <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
         <Card className="w-full max-w-md">
@@ -104,7 +110,7 @@ export default function TicketDetailsPage() {
                 </Button>
               </Link>
 
-              {ticketCode.startsWith("PARK") && (
+              {ticketCode && ticketCode.startsWith("PARK") && (
                 <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg text-sm">
                   <p className="text-blue-800 dark:text-blue-200 font-medium">💡 Sugerencia:</p>
                   <p className="text-blue-700 dark:text-blue-300">
@@ -194,7 +200,9 @@ export default function TicketDetailsPage() {
                   <Clock className="h-6 w-6 text-green-600" />
                   <div>
                     <p className="text-sm text-muted-foreground">Hora de Entrada</p>
-                    <p className="text-lg font-semibold">{formatDateTime(ticket.horaEntrada)}</p>
+                    <p className="text-lg font-semibold">
+                      {formatDateTime(ticket.horaOcupacion || ticket.horaEntrada)}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -237,7 +245,9 @@ export default function TicketDetailsPage() {
               <div className="flex items-center justify-center space-x-2 mb-2">
                 <DollarSign className="h-8 w-8 text-green-600" />
                 <div className="text-center">
-                  <p className="text-sm text-green-600 dark:text-green-400">Monto a Pagar</p>
+                  <p className="text-sm text-green-600 dark:text-green-400">
+                    {pricingModel === "fija" ? "Monto Fijo a Pagar" : "Monto a Pagar"}
+                  </p>
                   <p className="text-3xl font-bold text-green-600">{formatCurrency(ticket.montoCalculado)}</p>
                   {ticket.montoBs && (
                     <p className="text-lg font-medium text-green-500">
@@ -248,7 +258,7 @@ export default function TicketDetailsPage() {
                 </div>
               </div>
               <p className="text-sm text-green-600 dark:text-green-400">
-                {ticket.pricingModel === "fija"
+                {pricingModel === "fija"
                   ? "Tarifa fija aplicada según el horario de entrada"
                   : "Calculado por horas según el tiempo de estacionamiento y horario"}
               </p>

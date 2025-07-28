@@ -14,8 +14,10 @@ export function formatCurrency(amount: number, currency = "USD"): string {
   }).format(amount)
 }
 
-export function formatTime(date: Date | string): string {
+export function formatTime(date: Date | string | null | undefined): string {
+  if (!date) return "N/A" // Manejar null o undefined
   const d = typeof date === "string" ? new Date(date) : date
+  if (isNaN(d.getTime())) return "Fecha inválida" // Manejar fechas inválidas
   return d.toLocaleTimeString("es-VE", {
     hour: "2-digit",
     minute: "2-digit",
@@ -23,8 +25,10 @@ export function formatTime(date: Date | string): string {
   })
 }
 
-export function formatDate(date: Date | string): string {
+export function formatDate(date: Date | string | null | undefined): string {
+  if (!date) return "N/A" // Manejar null o undefined
   const d = typeof date === "string" ? new Date(date) : date
+  if (isNaN(d.getTime())) return "Fecha inválida" // Manejar fechas inválidas
   return d.toLocaleDateString("es-VE", {
     year: "numeric",
     month: "short",
@@ -32,8 +36,10 @@ export function formatDate(date: Date | string): string {
   })
 }
 
-export function formatDateTime(date: Date | string): string {
+export function formatDateTime(date: Date | string | null | undefined): string {
+  if (!date) return "N/A" // Manejar null o undefined
   const d = typeof date === "string" ? new Date(date) : date
+  if (isNaN(d.getTime())) return "Fecha inválida" // Manejar fechas inválidas
   return `${formatDate(d)} ${formatTime(d)}`
 }
 
