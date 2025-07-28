@@ -12,49 +12,49 @@
   "categories": ["business", "productivity", "utilities"],
   "icons": [
     {
-      "src": "/logo.png",
+      "src": "/logo.svg",
       "sizes": "72x72",
       "type": "image/svg+xml",
       "purpose": "maskable any"
     },
     {
-      "src": "/logo.png",
+      "src": "/logo.svg",
       "sizes": "96x96",
       "type": "image/svg+xml",
       "purpose": "maskable any"
     },
     {
-      "src": "/logo.png",
+      "src": "/logo.svg",
       "sizes": "128x128",
       "type": "image/svg+xml",
       "purpose": "maskable any"
     },
     {
-      "src": "/logo.png",
+      "src": "/logo.svg",
       "sizes": "144x144",
       "type": "image/svg+xml",
       "purpose": "maskable any"
     },
     {
-      "src": "/logo.png",
+      "src": "/logo.svg",
       "sizes": "152x152",
       "type": "image/svg+xml",
       "purpose": "maskable any"
     },
     {
-      "src": "/logo.png",
+      "src": "/logo.svg",
       "sizes": "192x192",
       "type": "image/svg+xml",
       "purpose": "maskable any"
     },
     {
-      "src": "/logo.png",
+      "src": "/logo.svg",
       "sizes": "384x384",
       "type": "image/svg+xml",
       "purpose": "maskable any"
     },
     {
-      "src": "/logo.png",
+      "src": "/logo.svg",
       "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "maskable any"
@@ -68,7 +68,7 @@
       "url": "/?action=search",
       "icons": [
         {
-          "src": "/logo.png",
+          "src": "/logo.svg",
           "sizes": "96x96",
           "type": "image/svg+xml"
         }
@@ -81,7 +81,7 @@
       "url": "/admin",
       "icons": [
         {
-          "src": "/logo.png",
+          "src": "/logo.svg",
           "sizes": "96x96",
           "type": "image/svg+xml"
         }
@@ -90,16 +90,16 @@
   ],
   "screenshots": [
     {
-      "src": "/screenshot-mobile.png",
+      "src": "/screenshot-mobile.svg",
       "sizes": "390x844",
-      "type": "image/png",
+      "type": "image/svg+xml",
       "form_factor": "narrow",
       "label": "Vista principal móvil - Búsqueda de tickets"
     },
     {
-      "src": "/screenshot-desktop.png",
+      "src": "/screenshot-desktop.svg",
       "sizes": "1280x720",
-      "type": "image/png",
+      "type": "image/svg+xml",
       "form_factor": "wide",
       "label": "Vista principal escritorio"
     }
