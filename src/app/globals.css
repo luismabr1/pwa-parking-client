@@ -2,28 +2,27 @@
 
 @layer base {
   :root {
-    /* 🎨 COLORES PRINCIPALES - MODO CLARO */
-    /* Puedes cambiar estos valores para experimentar con diferentes combinaciones */
-    --background: 0 0% 100%; /* Fondo principal */
-    --foreground: 0 0% 9%; /* Texto principal */
-    --card: 0 0% 100%; /* Fondo de cards */
-    --card-foreground: 0 0% 9%; /* Texto en cards */
-    --popover: 0 0% 100%; /* Fondo de popovers/dropdowns */
-    --popover-foreground: 0 0% 9%; /* Texto en popovers/dropdowns */
-    --primary: 0 0% 9%; /* Color primario (botones principales) */
-    --primary-foreground: 0 0% 98%; /* Texto sobre color primario */
-    --secondary: 0 0% 96%; /* Color secundario */
-    --secondary-foreground: 0 0% 9%; /* Texto sobre color secundario */
-    --muted: 0 0% 96%; /* Elementos silenciados */
-    --muted-foreground: 0 0% 45%; /* Texto silenciado */
-    --accent: 0 0% 96%; /* Color de acento */
-    --accent-foreground: 0 0% 9%; /* Texto sobre color de acento */
-    --destructive: 0 84% 60%; /* Color para errores */
-    --destructive-foreground: 0 0% 98%; /* Texto sobre color destructivo */
-    --border: 0 0% 90%; /* Color de bordes */
-    --input: 0 0% 90%; /* Fondo de inputs */
-    --ring: 0 0% 9%; /* Color de focus ring */
-    --radius: 0.5rem; /* Radio de bordes */
+    /* 🎨 TEMA CLARO - Profesional y limpio */
+    --background: 0 0% 100%; /* Blanco puro */
+    --foreground: 0 0% 9%; /* Negro casi puro para texto */
+    --card: 0 0% 100%; /* Cards blanco puro */
+    --card-foreground: 0 0% 9%; /* Texto negro en cards */
+    --popover: 0 0% 100%; /* Dropdowns blancos */
+    --popover-foreground: 0 0% 9%; /* Texto negro en dropdowns */
+    --primary: 0 0% 9%; /* Botones principales negros */
+    --primary-foreground: 0 0% 98%; /* Texto blanco sobre botones */
+    --secondary: 0 0% 96%; /* Elementos secundarios gris muy claro */
+    --secondary-foreground: 0 0% 9%; /* Texto negro sobre secundario */
+    --muted: 0 0% 96%; /* Elementos silenciados gris claro */
+    --muted-foreground: 0 0% 45%; /* Texto gris medio */
+    --accent: 0 0% 96%; /* Elementos de acento gris claro */
+    --accent-foreground: 0 0% 9%; /* Texto negro sobre acento */
+    --destructive: 0 84% 60%; /* Rojo para errores */
+    --destructive-foreground: 0 0% 98%; /* Texto blanco sobre rojo */
+    --border: 0 0% 90%; /* Bordes gris claro */
+    --input: 0 0% 90%; /* Inputs gris muy claro */
+    --ring: 0 0% 9%; /* Focus ring negro */
+    --radius: 0.75rem; /* Radio de bordes */
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
@@ -32,36 +31,26 @@
   }
 
   .dark {
-    /* 🌙 COLORES PRINCIPALES - MODO OSCURO */
-    /* 🎯 AQUÍ PUEDES EXPERIMENTAR CON DIFERENTES COMBINACIONES DE COLORES */
-    /* Esquema actual: GitHub Dark (profesional y moderno) */
-
-    /* 📱 FONDOS PRINCIPALES */
-    --background: 222 84% 4.9%; /* #0d1117 - Fondo principal muy oscuro */
-    --foreground: 210 40% 98%; /* #f0f6fc - Texto principal claro */
-    --card: 222 84% 4.9%; /* #0d1117 - Cards mismo color que fondo */
-    --card-foreground: 210 40% 98%; /* #f0f6fc - Texto en cards */
-    --popover: 217 32% 17%; /* #21262d - Fondo de dropdowns/popovers (más claro que el fondo) */
-    --popover-foreground: 210 40% 98%; /* #f0f6fc - Texto en dropdowns/popovers */
-
-    /* 🎨 COLORES DE ACCIÓN */
-    --primary: 213 93% 68%; /* #4f96ff - Azul principal (GitHub blue) */
-    --primary-foreground: 222 84% 4.9%; /* #0d1117 - Texto sobre primary */
-
-    /* 🔧 ELEMENTOS SECUNDARIOS */
-    --secondary: 217 32% 17%; /* #21262d - Elementos secundarios */
-    --secondary-foreground: 210 40% 98%; /* #f0f6fc - Texto secundario */
-    --muted: 217 32% 17%; /* #21262d - Elementos silenciados */
-    --muted-foreground: 217 10% 64%; /* #8b949e - Texto silenciado */
-    --accent: 217 32% 22%; /* #30363d - Elementos de acento (hover states) */
-    --accent-foreground: 210 40% 98%; /* #f0f6fc - Texto de acento */
-
-    /* ⚠️ ESTADOS Y BORDES */
-    --destructive: 0 62% 30%; /* #da3633 - Rojo para errores */
-    --destructive-foreground: 210 40% 98%; /* #f0f6fc - Texto sobre destructive */
-    --border: 217 32% 17%; /* #21262d - Bordes */
-    --input: 217 32% 17%; /* #21262d - Inputs */
-    --ring: 213 93% 68%; /* #4f96ff - Focus ring */
+    /* 🌙 TEMA OSCURO - Profesional y elegante */
+    --background: 0 0% 9%; /* Negro profundo */
+    --foreground: 0 0% 98%; /* Blanco casi puro para texto */
+    --card: 0 0% 9%; /* Cards negro profundo */
+    --card-foreground: 0 0% 98%; /* Texto blanco en cards */
+    --popover: 0 0% 15%; /* Dropdowns gris muy oscuro */
+    --popover-foreground: 0 0% 98%; /* Texto blanco en dropdowns */
+    --primary: 0 0% 98%; /* Botones principales blancos */
+    --primary-foreground: 0 0% 9%; /* Texto negro sobre botones blancos */
+    --secondary: 0 0% 15%; /* Elementos secundarios gris oscuro */
+    --secondary-foreground: 0 0% 98%; /* Texto blanco sobre secundario */
+    --muted: 0 0% 15%; /* Elementos silenciados gris oscuro */
+    --muted-foreground: 0 0% 65%; /* Texto gris claro */
+    --accent: 0 0% 20%; /* Elementos de acento gris medio-oscuro */
+    --accent-foreground: 0 0% 98%; /* Texto blanco sobre acento */
+    --destructive: 0 84% 60%; /* Rojo para errores (mismo que claro) */
+    --destructive-foreground: 0 0% 98%; /* Texto blanco sobre rojo */
+    --border: 0 0% 20%; /* Bordes gris oscuro */
+    --input: 0 0% 15%; /* Inputs gris muy oscuro */
+    --ring: 0 0% 98%; /* Focus ring blanco */
 
     /* 📊 COLORES DE GRÁFICOS */
     --chart-1: 220 70% 50%;
@@ -70,61 +59,6 @@
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
   }
-
-  /* 🎨 ALTERNATIVAS DE ESQUEMAS DE COLORES PARA EXPERIMENTAR */
-  /* 
- 💡 OPCIÓN 1: Esquema Azul Oscuro (Discord-like)
- .dark {
-   --background: 223 6% 20%;          // #36393f
-   --foreground: 210 11% 96%;         // #dcddde
-   --popover: 223 7% 15%;             // #2f3136
-   --popover-foreground: 210 11% 96%; // #dcddde
-   --primary: 235 86% 65%;            // #5865f2
-   --secondary: 223 7% 15%;           // #2f3136
-   --muted: 223 7% 15%;               // #2f3136
-   --accent: 223 6% 25%;              // #40444b
-   --border: 223 6% 25%;              // #40444b
- }
-
- 💡 OPCIÓN 2: Esquema Verde Oscuro (Matrix-like)
- .dark {
-   --background: 120 100% 2%;         // #001100
-   --foreground: 120 100% 90%;        // #ccffcc
-   --popover: 120 50% 10%;            // #1a331a
-   --popover-foreground: 120 100% 90%; // #ccffcc
-   --primary: 120 100% 50%;           // #00ff00
-   --secondary: 120 50% 10%;          // #1a331a
-   --muted: 120 50% 10%;              // #1a331a
-   --accent: 120 50% 15%;             // #264d26
-   --border: 120 50% 15%;             // #264d26
- }
-
- 💡 OPCIÓN 3: Esquema Púrpura Oscuro (Elegant)
- .dark {
-   --background: 260 15% 8%;          // #1a1625
-   --foreground: 260 15% 95%;         // #f1f0f5
-   --popover: 260 15% 12%;            // #252033
-   --popover-foreground: 260 15% 95%; // #f1f0f5
-   --primary: 260 100% 70%;           // #8b5cf6
-   --secondary: 260 15% 12%;          // #252033
-   --muted: 260 15% 12%;              // #252033
-   --accent: 260 15% 18%;             // #3a3548
-   --border: 260 15% 18%;             // #3a3548
- }
-
- 💡 OPCIÓN 4: Esquema Naranja Oscuro (Warm)
- .dark {
-   --background: 20 14% 8%;           // #1c1814
-   --foreground: 20 14% 95%;          // #f5f4f1
-   --popover: 20 14% 12%;             // #28241e
-   --popover-foreground: 20 14% 95%;  // #f5f4f1
-   --primary: 25 95% 53%;             // #f97316
-   --secondary: 20 14% 12%;           // #28241e
-   --muted: 20 14% 12%;               // #28241e
-   --accent: 20 14% 18%;              // #3d362b
-   --border: 20 14% 18%;              // #3d362b
- }
- */
 }
 
 @layer base {
@@ -137,37 +71,269 @@
     color: hsl(var(--foreground));
     font-feature-settings: "rlig" 1, "calt" 1;
   }
-
-  /* Asegurar que todos los elementos principales usen las variables correctas */
-  html {
-    background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
-  }
-
-  /* Forzar el fondo en elementos principales */
-  #__next,
-  main,
-  .min-h-screen {
-    background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
+  body[data-scroll-locked] {
+    margin-right: 0 !important;
   }
 }
 
-/* PWA Styles */
+/* Critical CSS for offline functionality */
+@layer utilities {
+  /* Ensure essential styles are always available */
+  .offline-safe {
+    background-color: hsl(var(--background)) !important;
+    color: hsl(var(--foreground)) !important;
+    border-color: hsl(var(--border)) !important;
+  }
+
+  .offline-button {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0.5rem 1rem !important;
+    border-radius: calc(var(--radius) - 2px) !important;
+    background-color: hsl(var(--primary)) !important;
+    color: hsl(var(--primary-foreground)) !important;
+    border: 1px solid hsl(var(--border)) !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease-in-out !important;
+  }
+
+  .offline-button:hover {
+    background-color: hsl(var(--primary) / 0.9) !important;
+    transform: translateY(-1px) !important;
+  }
+
+  .offline-card {
+    background-color: hsl(var(--card)) !important;
+    color: hsl(var(--card-foreground)) !important;
+    border: 1px solid hsl(var(--border)) !important;
+    border-radius: var(--radius) !important;
+    padding: 1rem !important;
+  }
+
+  .offline-input {
+    width: 100% !important;
+    padding: 0.5rem 0.75rem !important;
+    border: 1px solid hsl(var(--input)) !important;
+    border-radius: calc(var(--radius) - 2px) !important;
+    background-color: hsl(var(--background)) !important;
+    color: hsl(var(--foreground)) !important;
+  }
+
+  .offline-select {
+    width: 100% !important;
+    padding: 0.5rem 0.75rem !important;
+    border: 1px solid hsl(var(--input)) !important;
+    border-radius: calc(var(--radius) - 2px) !important;
+    background-color: hsl(var(--popover)) !important;
+    color: hsl(var(--popover-foreground)) !important;
+  }
+}
+
+/* PWA Styles with offline support */
 @media (display-mode: standalone) {
   body {
     user-select: none;
     -webkit-user-select: none;
     -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Ensure critical styles work offline */
+  button,
+  .btn {
+    background-color: hsl(var(--primary)) !important;
+    color: hsl(var(--primary-foreground)) !important;
+    border: 1px solid hsl(var(--border)) !important;
+    padding: 0.5rem 1rem !important;
+    border-radius: calc(var(--radius) - 2px) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
 }
 
-/* Mobile optimizations */
+/* Mobile optimizations with offline fallbacks */
 @media (max-width: 768px) {
   .container {
-    padding-left: 1rem;
-    padding-right: 1rem;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
   }
+
+  button,
+  .btn,
+  [role="button"] {
+    min-height: 44px !important;
+    min-width: 44px !important;
+    touch-action: manipulation !important;
+  }
+
+  input,
+  textarea,
+  select {
+    font-size: 16px !important; /* Prevents zoom on iOS */
+  }
+
+  /* Offline-safe mobile styles */
+  .mobile-safe {
+    padding: 1rem !important;
+    margin: 0.5rem !important;
+    background-color: hsl(var(--background)) !important;
+    color: hsl(var(--foreground)) !important;
+  }
+}
+
+/* Enhanced button styles with offline support */
+.btn,
+button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  border-radius: calc(var(--radius) - 2px);
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s ease-in-out;
+  outline: none;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  transform: translateY(0);
+  cursor: pointer;
+  border: 1px solid transparent;
+  padding: 0.5rem 1rem;
+  height: 2.5rem;
+}
+
+.btn:hover,
+button:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transform: translateY(-1px);
+}
+
+.btn:active,
+button:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.btn:focus-visible,
+button:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+.btn:disabled,
+button:disabled {
+  pointer-events: none;
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Primary button styles */
+.btn-primary,
+button.bg-primary,
+.bg-primary {
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border-color: hsl(var(--primary));
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.btn-primary:hover,
+button.bg-primary:hover,
+.bg-primary:hover {
+  background-color: hsl(var(--primary) / 0.9);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Secondary button styles */
+.btn-secondary,
+button.bg-secondary,
+.bg-secondary {
+  background-color: hsl(var(--secondary));
+  color: hsl(var(--secondary-foreground));
+  border-color: hsl(var(--border));
+}
+
+.btn-secondary:hover,
+button.bg-secondary:hover,
+.bg-secondary:hover {
+  background-color: hsl(var(--secondary) / 0.8);
+}
+
+/* Outline button styles */
+.btn-outline,
+button.border,
+.border {
+  border: 1px solid hsl(var(--input));
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+.btn-outline:hover,
+button.border:hover,
+.border:hover {
+  background-color: hsl(var(--accent));
+  color: hsl(var(--accent-foreground));
+}
+
+/* Destructive button styles */
+.btn-destructive,
+button.bg-destructive,
+.bg-destructive {
+  background-color: hsl(var(--destructive));
+  color: hsl(var(--destructive-foreground));
+  border-color: hsl(var(--destructive));
+  box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.2), 0 2px 4px -1px rgba(239, 68, 68, 0.1);
+}
+
+.btn-destructive:hover,
+button.bg-destructive:hover,
+.bg-destructive:hover {
+  background-color: hsl(var(--destructive) / 0.9);
+  box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.2), 0 4px 6px -2px rgba(239, 68, 68, 0.1);
+}
+
+/* Ghost button styles */
+.btn-ghost {
+  background-color: transparent;
+  color: hsl(var(--foreground));
+  box-shadow: none;
+  border-color: transparent;
+}
+
+.btn-ghost:hover {
+  background-color: hsl(var(--accent));
+  color: hsl(var(--accent-foreground));
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+/* Size variants */
+.btn-sm {
+  height: 2.25rem;
+  border-radius: calc(var(--radius) - 4px);
+  padding: 0 0.75rem;
+  font-size: 0.75rem;
+}
+
+.btn-lg {
+  height: 2.75rem;
+  border-radius: var(--radius);
+  padding: 0 2rem;
+  font-size: 1rem;
+}
+
+.btn-icon {
+  height: 2.5rem;
+  width: 2.5rem;
+  padding: 0;
 }
 
 /* Loading animations */
@@ -177,29 +343,354 @@
   }
 }
 
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes bounce {
+  0%,
+  100% {
+    transform: translateY(-25%);
+    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+  }
+  50% {
+    transform: translateY(0);
+    animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  }
+}
+
 .animate-spin {
   animation: spin 1s linear infinite;
 }
 
-/* Custom scrollbar para modo oscuro */
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-bounce {
+  animation: bounce 1s infinite;
+}
+
+/* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: hsl(var(--background));
+  background-color: hsl(var(--muted));
 }
 
 ::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted));
-  border-radius: 4px;
+  background-color: hsl(var(--muted-foreground));
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground));
+  background-color: hsl(var(--foreground));
 }
 
-/* 🎯 ESTILOS ESPECÍFICOS PARA DROPDOWNS Y SELECTS */
+/* Offline indicator with enhanced styling */
+.offline::before {
+  content: "📱 Modo Offline - Estilos Guardados";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(90deg, #f59e0b, #d97706);
+  color: white;
+  text-align: center;
+  padding: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  z-index: 9999;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  animation: slide-in-from-top 0.3s ease-out;
+}
+
+.offline {
+  padding-top: 40px;
+}
+
+/* Enhanced offline styles */
+.offline * {
+  /* Ensure all elements have fallback styles */
+  box-sizing: border-box !important;
+}
+
+.offline button,
+.offline .btn {
+  background-color: hsl(var(--primary)) !important;
+  color: hsl(var(--primary-foreground)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  padding: 0.5rem 1rem !important;
+  border-radius: calc(var(--radius) - 2px) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+}
+
+.offline input,
+.offline textarea,
+.offline select {
+  background-color: hsl(var(--background)) !important;
+  color: hsl(var(--foreground)) !important;
+  border: 1px solid hsl(var(--input)) !important;
+  padding: 0.5rem 0.75rem !important;
+  border-radius: calc(var(--radius) - 2px) !important;
+}
+
+.offline .card {
+  background-color: hsl(var(--card)) !important;
+  color: hsl(var(--card-foreground)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: var(--radius) !important;
+  padding: 1rem !important;
+}
+
+/* Card improvements */
+.card {
+  background-color: hsl(var(--card));
+  color: hsl(var(--card-foreground));
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border: 1px solid hsl(var(--border) / 0.5);
+  transition: box-shadow 0.2s ease-in-out;
+  border-radius: var(--radius);
+  padding: 1rem;
+}
+
+.card:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Input improvements */
+.input {
+  background-color: hsl(var(--background));
+  border: 1px solid hsl(var(--input));
+  transition: all 0.2s ease-in-out;
+  border-radius: calc(var(--radius) - 2px);
+  padding: 0.5rem 0.75rem;
+  width: 100%;
+  height: 2.5rem;
+  font-size: 0.875rem;
+}
+
+.input:focus {
+  border-color: hsl(var(--ring));
+  box-shadow: 0 0 0 2px hsl(var(--ring) / 0.2);
+  outline: none;
+}
+
+/* Select improvements for offline */
+select,
+.select-trigger {
+  background-color: hsl(var(--popover)) !important;
+  color: hsl(var(--popover-foreground)) !important;
+  border: 1px solid hsl(var(--input)) !important;
+  border-radius: calc(var(--radius) - 2px) !important;
+  padding: 0.5rem 0.75rem !important;
+  width: 100% !important;
+  height: 2.5rem !important;
+  font-size: 0.875rem !important;
+}
+
+/* Badge improvements */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  padding: 0.125rem 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  transition: colors 0.2s ease-in-out;
+}
+
+.badge:focus {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+.badge-default {
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
+
+.badge-default:hover {
+  background-color: hsl(var(--primary) / 0.8);
+}
+
+.badge-secondary {
+  background-color: hsl(var(--secondary));
+  color: hsl(var(--secondary-foreground));
+}
+
+.badge-secondary:hover {
+  background-color: hsl(var(--secondary) / 0.8);
+}
+
+.badge-destructive {
+  background-color: hsl(var(--destructive));
+  color: hsl(var(--destructive-foreground));
+}
+
+.badge-destructive:hover {
+  background-color: hsl(var(--destructive) / 0.8);
+}
+
+.badge-outline {
+  color: hsl(var(--foreground));
+  border: 1px solid hsl(var(--input));
+}
+
+.badge-outline:hover {
+  background-color: hsl(var(--accent));
+  color: hsl(var(--accent-foreground));
+}
+
+/* Alert improvements */
+.alert {
+  position: relative;
+  width: 100%;
+  border-radius: calc(var(--radius) - 2px);
+  border: 1px solid;
+  padding: 1rem;
+  font-size: 0.875rem;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.alert-default {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  border-color: hsl(var(--border));
+}
+
+.alert-destructive {
+  border-color: hsl(var(--destructive) / 0.5);
+  color: hsl(var(--destructive));
+}
+
+.dark .alert-destructive {
+  border-color: hsl(var(--destructive));
+}
+
+/* Mobile-specific improvements */
+@media (max-width: 640px) {
+  .btn-mobile {
+    padding: 1rem 1.5rem;
+    font-size: 1rem;
+    min-height: 48px;
+  }
+
+  .space-y-mobile > * + * {
+    margin-top: 1rem;
+  }
+
+  .btn-mobile-full {
+    width: 100%;
+    padding: 1rem;
+    font-size: 1rem;
+  }
+}
+
+/* Focus improvements for accessibility */
+.focus-visible:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .btn,
+  button {
+    border-width: 2px;
+  }
+
+  .card {
+    border-width: 2px;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+}
+
+/* Critical styles that must work offline */
+@supports not (display: grid) {
+  /* Fallback styles for older browsers */
+  .grid {
+    display: block !important;
+  }
+
+  .flex {
+    display: block !important;
+  }
+}
+
+/* Ensure fonts load properly offline */
+@font-face {
+  font-family: "Inter-fallback";
+  src: local("Arial"), local("Helvetica"), local("sans-serif");
+  font-display: swap;
+}
+
+/* Fallback for when custom properties fail */
+button {
+  background-color: #000000;
+  color: #ffffff;
+  border: 1px solid #cccccc;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+
+input,
+textarea,
+select {
+  background-color: #ffffff;
+  color: #000000;
+  border: 1px solid #cccccc;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+}
+
+.dark button {
+  background-color: #ffffff;
+  color: #000000;
+}
+
+.dark input,
+.dark textarea,
+.dark select {
+  background-color: #1a1a1a;
+  color: #ffffff;
+  border-color: #333333;
+}
+
+/* 🎯 ESTILOS ESPECÍFICOS PARA RADIX UI COMPONENTS */
 /* Asegurar que todos los dropdowns tengan fondo apropiado */
 [data-radix-select-content] {
   background-color: hsl(var(--popover)) !important;
@@ -395,41 +886,25 @@ select:focus {
   border-top-color: hsl(var(--primary));
 }
 
-/* 🎯 ESTILOS ESPECÍFICOS PARA RADIX UI COMPONENTS */
-/* Tooltip */
-[data-radix-tooltip-content] {
-  background-color: hsl(var(--popover)) !important;
-  color: hsl(var(--popover-foreground)) !important;
-  border: 1px solid hsl(var(--border)) !important;
-}
-
-/* Dialog/Modal */
+/* 🎯 ASEGURAR COHERENCIA EN TODOS LOS COMPONENTES */
+[data-radix-select-content],
+[data-radix-dropdown-menu-content],
+[data-radix-popover-content],
 [data-radix-dialog-content] {
-  background-color: hsl(var(--background)) !important;
-  color: hsl(var(--foreground)) !important;
-  border: 1px solid hsl(var(--border)) !important;
-}
-
-/* Popover */
-[data-radix-popover-content] {
   background-color: hsl(var(--popover)) !important;
   color: hsl(var(--popover-foreground)) !important;
   border: 1px solid hsl(var(--border)) !important;
 }
 
-/* DropdownMenu */
-[data-radix-dropdown-menu-content] {
-  background-color: hsl(var(--popover)) !important;
-  color: hsl(var(--popover-foreground)) !important;
-  border: 1px solid hsl(var(--border)) !important;
-}
-
+[data-radix-select-item],
 [data-radix-dropdown-menu-item] {
   background-color: hsl(var(--popover)) !important;
   color: hsl(var(--popover-foreground)) !important;
 }
 
+[data-radix-select-item]:hover,
 [data-radix-dropdown-menu-item]:hover,
+[data-radix-select-item][data-highlighted],
 [data-radix-dropdown-menu-item][data-highlighted] {
   background-color: hsl(var(--accent)) !important;
   color: hsl(var(--accent-foreground)) !important;

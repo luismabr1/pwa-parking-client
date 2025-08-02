@@ -92,11 +92,11 @@ export default function NotificationPrompt({
   if (success) {
     return (
       <div className="w-full max-w-md mx-auto">
-        <Card className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 shadow-xl">
+        <Card className="bg-card border-border shadow-xl">
           <CardContent className="pt-6 text-center">
             <CheckCircle2 className="mx-auto h-16 w-16 text-green-500 mb-4" />
-            <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">¡Notificaciones Activadas!</h3>
-            <p className="text-gray-600 dark:text-gray-300">Te notificaremos cuando tu pago sea validado</p>
+            <h3 className="text-lg font-semibold mb-2 text-card-foreground">¡Notificaciones Activadas!</h3>
+            <p className="text-muted-foreground">Te notificaremos cuando tu pago sea validado</p>
           </CardContent>
         </Card>
       </div>
@@ -105,18 +105,18 @@ export default function NotificationPrompt({
 
   return (
     <div className="w-full max-w-md mx-auto">
-      <Card className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 shadow-xl">
+      <Card className="bg-card border-border shadow-xl">
         <CardHeader className="text-center pb-4">
           <div className="mx-auto w-16 h-16 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center mb-4">
             <Bell className="h-8 w-8 text-blue-600 dark:text-blue-300" />
           </div>
-          <CardTitle className="text-xl text-gray-900 dark:text-white">¿Activar Notificaciones?</CardTitle>
+          <CardTitle className="text-xl text-card-foreground">¿Activar Notificaciones?</CardTitle>
         </CardHeader>
 
         <CardContent className="space-y-4">
           <div className="text-center space-y-2">
-            <p className="font-medium text-gray-900 dark:text-white">Te notificaremos cuando:</p>
-            <ul className="text-sm space-y-1 text-gray-600 dark:text-gray-300">
+            <p className="font-medium text-card-foreground">Te notificaremos cuando:</p>
+            <ul className="text-sm space-y-1 text-muted-foreground">
               <li className="flex items-center justify-center gap-2">
                 <span className="text-green-500">✅</span>
                 <span>Tu pago sea validado</span>
@@ -151,7 +151,7 @@ export default function NotificationPrompt({
             <Button
               onClick={onSkip}
               variant="outline"
-              className="flex-1 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600"
+              className="flex-1 bg-background hover:bg-accent hover:text-accent-foreground text-foreground border-border"
               disabled={isEnabling}
             >
               <BellOff className="mr-2 h-4 w-4" />
@@ -160,7 +160,7 @@ export default function NotificationPrompt({
 
             <Button
               onClick={handleEnable}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+              className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-primary"
               disabled={isEnabling}
             >
               {isEnabling ? (
@@ -174,7 +174,7 @@ export default function NotificationPrompt({
             </Button>
           </div>
 
-          <p className="text-xs text-gray-500 dark:text-gray-400 text-center pt-2">
+          <p className="text-xs text-muted-foreground text-center pt-2">
             Puedes desactivar las notificaciones en cualquier momento desde la configuración de tu navegador
           </p>
         </CardContent>

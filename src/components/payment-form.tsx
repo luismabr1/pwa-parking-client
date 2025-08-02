@@ -58,6 +58,13 @@ const exitTimeOptions = [
   { value: "60min", label: "En 1 hora", minutes: 60 },
 ]
 
+// Opciones de tipo de identidad
+const identityTypeOptions = [
+  { value: "V", label: "Natural" },
+  { value: "J", label: "Jurídico" },
+  { value: "E", label: "Extranjero" },
+]
+
 // Función para validar teléfono en tiempo real
 const validatePhoneNumber = (phone: string): { isValid: boolean; message: string } => {
   if (!phone) {
@@ -85,6 +92,55 @@ const validatePhoneNumber = (phone: string): { isValid: boolean; message: string
   return { isValid: true, message: "Número válido" }
 }
 
+// Función para validar número de identidad
+const validateIdentityNumber = (
+  identityType: string,
+  identityNumber: string,
+): { isValid: boolean; message: string } => {
+  if (!identityType) {
+    return { isValid: false, message: "Seleccione el tipo de identidad" }
+  }
+
+  if (!identityNumber) {
+    return { isValid: false, message: "El número de identidad es requerido" }
+  }
+
+  // Remover espacios y guiones
+  const cleanNumber = identityNumber.replace(/[-\s]/g, "")
+
+  // Validar que solo contenga números
+  if (!/^\d+$/.test(cleanNumber)) {
+    return { isValid: false, message: "Solo se permiten números" }
+  }
+
+  // Validar longitud según el tipo
+  let minLength = 7
+  let maxLength = 10
+
+  if (identityType === "E") {
+    minLength = 8
+    maxLength = 12
+  }
+
+  if (cleanNumber.length < minLength) {
+    return { isValid: false, message: `Mínimo ${minLength} dígitos` }
+  }
+
+  if (cleanNumber.length > maxLength) {
+    return { isValid: false, message: `Máximo ${maxLength} dígitos` }
+  }
+
+  return { isValid: true, message: "Número válido" }
+}
+
+// Función para formatear el número de identidad completo
+const formatFullIdentityNumber = (identityType: string, identityNumber: string): string => {
+  if (!identityType || !identityNumber) return ""
+
+  const cleanNumber = identityNumber.replace(/[-\s]/g, "")
+  return `${identityType}-${cleanNumber}`
+}
+
 export default function PaymentForm({ ticket }: PaymentFormProps) {
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -109,6 +165,12 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
     message: "",
   })
 
+  // Estado para validación de identidad en tiempo real
+  const [identityValidation, setIdentityValidation] = useState<{ isValid: boolean; message: string }>({
+    isValid: false,
+    message: "",
+  })
+
   // Hook para notificaciones del ticket
   const {
     isSupported: notificationsSupported,
@@ -122,11 +184,12 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
   const montoBs = ticket.montoBs || ticket.montoCalculado * tasaCambio
 
   // Initialize formData with a neutral value, updated by paymentType selection
-  const [formData, setFormData] = useState<PaymentFormData & { tiempoSalida?: string }>({
+  const [formData, setFormData] = useState<PaymentFormData & { tiempoSalida?: string; tipoIdentidad?: string }>({
     referenciaTransferencia: "",
     banco: "",
     telefono: "",
     numeroIdentidad: "",
+    tipoIdentidad: "V", // Valor por defecto
     montoPagado: ticket.montoCalculado, // Default to USD value
     tiempoSalida: "now",
   })
@@ -184,6 +247,12 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
       const validation = validatePhoneNumber(value)
       setPhoneValidation(validation)
     }
+
+    // Validación en tiempo real para el número de identidad
+    if (name === "numeroIdentidad") {
+      const validation = validateIdentityNumber(formData.tipoIdentidad || "V", value)
+      setIdentityValidation(validation)
+    }
   }
 
   const handleBankChange = (value: string) => {
@@ -198,6 +267,19 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
       ...prev,
       tiempoSalida: value,
     }))
+  }
+
+  const handleIdentityTypeChange = (value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      tipoIdentidad: value,
+    }))
+
+    // Revalidar el número de identidad con el nuevo tipo
+    if (formData.numeroIdentidad) {
+      const validation = validateIdentityNumber(value, formData.numeroIdentidad)
+      setIdentityValidation(validation)
+    }
   }
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -290,6 +372,9 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
         imagenComprobante = await convertImageToBase64(selectedImage)
       }
 
+      // Formatear el número de identidad completo
+      const numeroIdentidadCompleto = formatFullIdentityNumber(formData.tipoIdentidad || "V", formData.numeroIdentidad)
+
       const paymentData = {
         codigoTicket: ticket.codigoTicket,
         tipoPago: paymentType,
@@ -298,7 +383,7 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
         referenciaTransferencia: formData.referenciaTransferencia || undefined,
         banco: formData.banco || undefined,
         telefono: formData.telefono || undefined,
-        numeroIdentidad: formData.numeroIdentidad || undefined,
+        numeroIdentidad: numeroIdentidadCompleto || undefined,
         imagenComprobante: imagenComprobante || undefined,
       }
 
@@ -345,7 +430,7 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
         formData.referenciaTransferencia.trim() !== "" &&
         formData.banco.trim() !== "" &&
         phoneValidation.isValid &&
-        formData.numeroIdentidad.trim() !== "" &&
+        identityValidation.isValid &&
         formData.montoPagado > 0 &&
         formData.tiempoSalida
       )
@@ -788,18 +873,64 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                 </div>
 
                 <div className="space-y-2">
+                  <label htmlFor="tipoIdentidad" className="text-sm font-medium">
+                    Tipo de Identidad
+                  </label>
+                  <Select value={formData.tipoIdentidad} onValueChange={handleIdentityTypeChange}>
+                    <SelectTrigger id="tipoIdentidad" className="h-12 text-lg">
+                      <SelectValue placeholder="Seleccione tipo de identidad" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {identityTypeOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
                   <label htmlFor="numeroIdentidad" className="text-sm font-medium">
                     Número de Identidad
                   </label>
-                  <Input
-                    id="numeroIdentidad"
-                    name="numeroIdentidad"
-                    value={formData.numeroIdentidad}
-                    onChange={handleChange}
-                    className="h-12 text-lg"
-                    placeholder="Ej. V12345678"
-                    required
-                  />
+                  <div className="relative">
+                    <div className="flex">
+                      <div className="flex items-center px-3 bg-muted border border-r-0 rounded-l-md">
+                        <span className="text-sm font-medium">{formData.tipoIdentidad || "V"}-</span>
+                      </div>
+                      <Input
+                        id="numeroIdentidad"
+                        name="numeroIdentidad"
+                        value={formData.numeroIdentidad}
+                        onChange={handleChange}
+                        className={`h-12 text-lg rounded-l-none pr-10 ${
+                          formData.numeroIdentidad && identityValidation.isValid
+                            ? "border-green-500 focus:border-green-500"
+                            : formData.numeroIdentidad && !identityValidation.isValid
+                              ? "border-red-500 focus:border-red-500"
+                              : ""
+                        }`}
+                        placeholder="12345678"
+                        required
+                      />
+                      {formData.numeroIdentidad && (
+                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                          {identityValidation.isValid ? (
+                            <Check className="h-5 w-5 text-green-500" />
+                          ) : (
+                            <AlertCircle className="h-5 w-5 text-red-500" />
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  {formData.numeroIdentidad && (
+                    <p className={`text-sm ${identityValidation.isValid ? "text-green-600" : "text-red-600"}`}>
+                      {identityValidation.message}
+                    </p>
+                  )}
+                  <p className="text-xs text-muted-foreground">Solo números, sin guiones ni espacios</p>
                 </div>
 
                 <div className="space-y-2">
@@ -989,8 +1120,10 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                         </div>
 
                         <div>
-                          <p className="text-muted-foreground">Cédula:</p>
-                          <p className="font-medium">{formData.numeroIdentidad}</p>
+                          <p className="text-muted-foreground">Identidad:</p>
+                          <p className="font-medium">
+                            {formatFullIdentityNumber(formData.tipoIdentidad || "V", formData.numeroIdentidad)}
+                          </p>
                         </div>
                       </div>
 
