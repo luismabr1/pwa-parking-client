@@ -1,193 +1,308 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { rateLimiter, RATE_LIMIT_CONFIGS } from "./rate-limiter"
-import {
-  getClientIP,
-  detectSuspiciousActivity,
-  sanitizeInput,
-  getSecurityHeaders,
-  generateRequestFingerprint,
-} from "./security-utils"
 import { logSecurityEvent } from "./security-logger"
 
-export interface SecurityOptions {
-  rateLimitType: keyof typeof RATE_LIMIT_CONFIGS
+// Rate limiting storage
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>()
+
+// Suspicious patterns
+const SUSPICIOUS_PATTERNS = [
+  /(<script|javascript:|data:text\/html)/i,
+  /(union\s+select|drop\s+table|delete\s+from)/i,
+  /(\.\.\/)|(\.\.\\)/,
+  /(eval\(|setTimeout\(|setInterval\()/i,
+  /(document\.|window\.|location\.)/i,
+]
+
+// Verificar si estamos en desarrollo
+function isDevelopment(): boolean {
+  return process.env.NODE_ENV === "development" || process.env.NODE_ENV !== "production"
+}
+
+// Get client IP
+export function getClientIP(request: NextRequest): string {
+  const forwarded = request.headers.get("x-forwarded-for")
+  const realIP = request.headers.get("x-real-ip")
+  const remoteAddr = request.headers.get("remote-addr")
+
+  if (forwarded) {
+    return forwarded.split(",")[0].trim()
+  }
+  if (realIP) {
+    return realIP
+  }
+  if (remoteAddr) {
+    return remoteAddr
+  }
+
+  // Fallback para desarrollo local
+  return request.ip || "127.0.0.1"
+}
+
+// Generate request fingerprint
+function generateFingerprint(request: NextRequest): string {
+  const userAgent = request.headers.get("user-agent") || ""
+  const acceptLanguage = request.headers.get("accept-language") || ""
+  const acceptEncoding = request.headers.get("accept-encoding") || ""
+
+  const combined = userAgent + acceptLanguage + acceptEncoding
+  let hash = 0
+  for (let i = 0; i < combined.length; i++) {
+    const char = combined.charCodeAt(i)
+    hash = (hash << 5) - hash + char
+    hash = hash & hash // Convert to 32bit integer
+  }
+  return Math.abs(hash).toString(16).substring(0, 8)
+}
+
+// Rate limiting
+function checkRateLimit(clientIP: string, endpoint: string, type: "NORMAL" | "CRITICAL"): boolean {
+  const key = `${clientIP}:${endpoint}`
+  const now = Date.now()
+  const windowMs = 60000 // 1 minute
+  const maxRequests = type === "CRITICAL" ? 10 : 100
+
+  const current = rateLimitMap.get(key)
+
+  if (!current || now > current.resetTime) {
+    rateLimitMap.set(key, { count: 1, resetTime: now + windowMs })
+    return true
+  }
+
+  if (current.count >= maxRequests) {
+    return false
+  }
+
+  current.count++
+  return true
+}
+
+// Sanitize request body with special handling for images
+function sanitizeBody(body: any): any {
+  if (!body || typeof body !== "object") {
+    return body
+  }
+
+  const sanitized: any = {}
+
+  for (const [key, value] of Object.entries(body)) {
+    if (typeof value === "string") {
+      // Special handling for base64 images
+      if (key === "imagenComprobante" && value.startsWith("data:image/")) {
+        // Don't truncate or sanitize base64 images, just validate format
+        if (value.length > 100 && value.includes(",")) {
+          sanitized[key] = value // Keep full image
+        } else {
+          console.warn(`⚠️ [SECURITY] Imagen base64 inválida o muy pequeña: ${value.length} chars`)
+          sanitized[key] = null
+        }
+      } else {
+        // Regular string sanitization with increased limit for payment data
+        const maxLength = key.includes("referencia") || key.includes("banco") || key.includes("telefono") ? 50 : 1000
+        sanitized[key] = value.length > maxLength ? value.substring(0, maxLength) : value
+      }
+    } else if (typeof value === "number") {
+      sanitized[key] = value
+    } else if (typeof value === "boolean") {
+      sanitized[key] = value
+    } else if (value === null || value === undefined) {
+      sanitized[key] = value
+    } else {
+      // For objects/arrays, recursively sanitize
+      sanitized[key] = sanitizeBody(value)
+    }
+  }
+
+  return sanitized
+}
+
+// Check for suspicious content with image awareness
+function checkSuspiciousContent(data: any): { suspicious: boolean; reasons: string[] } {
+  const reasons: string[] = []
+
+  function checkValue(value: any, path = ""): void {
+    if (typeof value === "string") {
+      // Skip suspicious pattern checks for base64 images
+      if (path === "imagenComprobante" && value.startsWith("data:image/")) {
+        return // Base64 images can contain patterns that look suspicious
+      }
+
+      for (const pattern of SUSPICIOUS_PATTERNS) {
+        if (pattern.test(value)) {
+          reasons.push(`Suspicious pattern in ${path || "data"}: ${pattern.source}`)
+        }
+      }
+
+      // Check for excessively long strings (except images)
+      if (value.length > 10000 && !path.includes("imagen")) {
+        reasons.push(`Excessively long string in ${path || "data"}: ${value.length} characters`)
+      }
+    } else if (typeof value === "object" && value !== null) {
+      for (const [key, val] of Object.entries(value)) {
+        checkValue(val, path ? `${path}.${key}` : key)
+      }
+    }
+  }
+
+  checkValue(data)
+  return { suspicious: reasons.length > 0, reasons }
+}
+
+// Security middleware options
+interface SecurityOptions {
+  rateLimitType?: "NORMAL" | "CRITICAL"
   requireValidOrigin?: boolean
   sanitizeBody?: boolean
   logRequests?: boolean
+  maxBodySize?: number // New option for body size limit
 }
 
+// Main security middleware
 export async function withSecurity(
   request: NextRequest,
   handler: (request: NextRequest, sanitizedData?: any) => Promise<NextResponse>,
-  options: SecurityOptions,
+  options: SecurityOptions = {},
 ) {
   const startTime = Date.now()
   const clientIP = getClientIP(request)
-  const endpoint = request.nextUrl.pathname
+  const endpoint = new URL(request.url).pathname
   const method = request.method
   const userAgent = request.headers.get("user-agent") || ""
-  const origin = request.headers.get("origin")
-  const referer = request.headers.get("referer")
-  const fingerprint = generateRequestFingerprint(request)
-  const securityHeaders = getSecurityHeaders()
+  const fingerprint = generateFingerprint(request)
+
+  // Detectar si estamos en desarrollo local
+  const isDevMode = isDevelopment()
+  const isLocalIP = clientIP === "::1" || clientIP === "127.0.0.1" || clientIP === "localhost"
+
+  console.log(`🔍 [SECURITY-DEBUG] NODE_ENV: ${process.env.NODE_ENV}`)
+  console.log(`🔍 [SECURITY-DEBUG] isDevMode: ${isDevMode}`)
+  console.log(`🔍 [SECURITY-DEBUG] clientIP: ${clientIP}`)
+  console.log(`🔍 [SECURITY-DEBUG] isLocalIP: ${isLocalIP}`)
+  console.log(`🔍 [SECURITY-DEBUG] endpoint: ${endpoint}`)
+  console.log(`🔍 [SECURITY-DEBUG] method: ${method}`)
 
   try {
-    // 1. Rate limiting
-    const rateLimitConfig = RATE_LIMIT_CONFIGS[options.rateLimitType]
-    const rateLimitResult = rateLimiter.check(clientIP, endpoint, rateLimitConfig)
-
-    if (!rateLimitResult.allowed) {
-      // Log del rate limit excedido
-      await logSecurityEvent.rateLimitExceeded(
-        clientIP,
-        endpoint,
-        method,
-        {
-          maxRequests: rateLimitConfig.maxRequests,
-          currentCount: rateLimitConfig.maxRequests + 1, // Aproximado
-          windowMs: rateLimitConfig.windowMs,
-          blocked: rateLimitResult.blocked || false,
-          blockDuration: rateLimitConfig.blockDurationMs,
-        },
-        userAgent,
-      )
-
-      const response = NextResponse.json(
-        {
-          message: rateLimitResult.blocked
-            ? "Tu IP ha sido temporalmente bloqueada por exceso de solicitudes. Intenta más tarde."
-            : "Demasiadas solicitudes. Intenta más tarde.",
-          retryAfter: Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000),
-        },
-        { status: 429 },
-      )
-
-      // Agregar headers de rate limiting
-      response.headers.set("X-RateLimit-Limit", rateLimitConfig.maxRequests.toString())
-      response.headers.set("X-RateLimit-Remaining", rateLimitResult.remaining.toString())
-      response.headers.set("X-RateLimit-Reset", rateLimitResult.resetTime.toString())
-      response.headers.set("Retry-After", Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000).toString())
-
-      // Aplicar headers de seguridad
-      Object.entries(securityHeaders).forEach(([key, value]) => {
-        response.headers.set(key, value)
-      })
-
-      return response
-    }
-
-    // 2. Validar origen si es requerido
-    if (options.requireValidOrigin) {
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
-
-      if (origin && !origin.includes("localhost") && !origin.includes(baseUrl)) {
-        // Log de origen inválido
-        await logSecurityEvent.invalidOrigin(clientIP, endpoint, method, origin, userAgent)
-
-        return NextResponse.json({ message: "Origen no autorizado" }, { status: 403 })
+    // Rate limiting (skip in development for local IPs)
+    if (options.rateLimitType && !(isDevMode && isLocalIP)) {
+      if (!checkRateLimit(clientIP, endpoint, options.rateLimitType)) {
+        await logSecurityEvent.rateLimitExceeded(clientIP, endpoint, method, userAgent)
+        return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 })
       }
+    } else if (isDevMode && isLocalIP) {
+      console.log(`🔧 [SECURITY] Desarrollo local detectado, omitiendo rate limiting para ${clientIP}`)
     }
 
-    // 3. Parsear y sanitizar datos del body
+    // Parse and sanitize request body
+    let rawData: any = null
     let sanitizedData: any = null
-    if (method !== "GET" && options.sanitizeBody) {
+
+    if (method === "POST" || method === "PUT" || method === "PATCH") {
       try {
-        const rawData = await request.json()
-        sanitizedData = sanitizeInput(rawData)
+        const contentType = request.headers.get("content-type") || ""
 
-        // Detectar actividad sospechosa
-        const suspiciousCheck = detectSuspiciousActivity(request, sanitizedData)
-        if (suspiciousCheck.suspicious) {
-          // Log de actividad sospechosa
-          await logSecurityEvent.suspiciousActivity(
-            clientIP,
-            endpoint,
-            method,
-            suspiciousCheck.reasons,
-            sanitizedData,
-            userAgent,
-          )
+        if (contentType.includes("application/json")) {
+          // Get raw text first to check size
+          const rawText = await request.text()
 
-          // Para actividad muy sospechosa, bloquear temporalmente
-          if (
-            suspiciousCheck.reasons.some(
-              (r) => r.includes("malicioso") || r.includes("injection") || r.includes("XSS") || r.includes("SQL"),
-            )
-          ) {
-            // Log de request malicioso
-            await logSecurityEvent.maliciousRequest(
-              clientIP,
-              endpoint,
-              method,
-              suspiciousCheck.reasons.join(", "),
-              sanitizedData,
-              userAgent,
-            )
+          // Check body size with higher limit for images
+          const maxSize = options.maxBodySize || (endpoint.includes("payment") ? 10 * 1024 * 1024 : 1024 * 1024) // 10MB for payments, 1MB for others
 
-            // Bloquear IP temporalmente
-            rateLimiter.check(clientIP, endpoint, {
-              maxRequests: 1,
-              windowMs: 60 * 60 * 1000, // 1 hora
-              blockDurationMs: 60 * 60 * 1000, // 1 hora
-            })
+          if (rawText.length > maxSize) {
+            console.error(`❌ [SECURITY] Request body too large: ${rawText.length} bytes (max: ${maxSize})`)
+            return NextResponse.json({ error: "Request body too large" }, { status: 413 })
+          }
 
-            return NextResponse.json({ message: "Solicitud bloqueada por seguridad" }, { status: 403 })
+          rawData = JSON.parse(rawText)
+
+          if (isDevMode) {
+            // In development, show truncated version for logging
+            const logData = { ...rawData }
+            if (logData.imagenComprobante && logData.imagenComprobante.length > 200) {
+              logData.imagenComprobante = logData.imagenComprobante.substring(0, 200) + "... achico el texto"
+            }
+            console.log(`🔍 [SECURITY-DEBUG] rawData:`, JSON.stringify(logData, null, 2))
+          }
+
+          if (options.sanitizeBody) {
+            sanitizedData = sanitizeBody(rawData)
+
+            if (isDevMode) {
+              // In development, show truncated version for logging
+              const logSanitized = { ...sanitizedData }
+              if (logSanitized.imagenComprobante && logSanitized.imagenComprobante.length > 200) {
+                logSanitized.imagenComprobante =
+                  logSanitized.imagenComprobante.substring(0, 200) + "... achico el texto"
+              }
+              console.log(`🔍 [SECURITY-DEBUG] sanitizedData:`, JSON.stringify(logSanitized, null, 2))
+            }
           }
         }
       } catch (error) {
-        // Log de error del sistema
-        await logSecurityEvent.systemError(
-          clientIP,
-          endpoint,
-          method,
-          `Error parsing request body: ${error}`,
-          Date.now() - startTime,
-        )
-
-        return NextResponse.json({ message: "Datos de solicitud inválidos" }, { status: 400 })
+        console.error(`❌ [SECURITY] Error parsing request body:`, error)
+        return NextResponse.json({ error: "Invalid request body" }, { status: 400 })
       }
     }
 
-    // 4. Log de solicitudes si está habilitado (solo para debugging, no se guarda en DB)
-    if (options.logRequests) {
-      console.log(
-        `📝 [SECURITY] ${method} ${endpoint} from ${clientIP} - Rate limit: ${rateLimitResult.remaining}/${rateLimitConfig.maxRequests} - Fingerprint: ${fingerprint}`,
-      )
+    // En desarrollo local, relajar las validaciones de seguridad
+    if (isDevMode && isLocalIP) {
+      console.log(`🔧 [SECURITY] Modo desarrollo detectado, relajando validaciones para IP local: ${clientIP}`)
     }
 
-    // 5. Ejecutar el handler original
-    const response = await handler(request, sanitizedData)
+    // Check for suspicious content (skip for local development)
+    if (sanitizedData && !(isDevMode && isLocalIP)) {
+      const suspiciousCheck = checkSuspiciousContent(sanitizedData)
 
-    // 6. Agregar headers de seguridad y rate limiting a la respuesta
-    Object.entries(securityHeaders).forEach(([key, value]) => {
-      response.headers.set(key, value)
-    })
+      if (isDevMode) {
+        console.log(`🔍 [SECURITY-DEBUG] suspiciousCheck.suspicious: ${suspiciousCheck.suspicious}`)
+        console.log(`🔍 [SECURITY-DEBUG] suspiciousCheck.reasons:`, suspiciousCheck.reasons)
+      }
 
-    response.headers.set("X-RateLimit-Limit", rateLimitConfig.maxRequests.toString())
-    response.headers.set("X-RateLimit-Remaining", rateLimitResult.remaining.toString())
-    response.headers.set("X-RateLimit-Reset", rateLimitResult.resetTime.toString())
-    response.headers.set("X-Request-ID", fingerprint)
+      if (suspiciousCheck.suspicious) {
+        await logSecurityEvent.maliciousRequest(
+          clientIP,
+          endpoint,
+          method,
+          `Suspicious content detected: ${suspiciousCheck.reasons.join(", ")}`,
+          sanitizedData,
+          userAgent,
+        )
+        return NextResponse.json({ error: "Suspicious content detected" }, { status: 400 })
+      } else if (isDevMode) {
+        console.log(`🔍 [SECURITY-DEBUG] NO se detectó actividad sospechosa`)
+      }
+    } else if (isDevMode && isLocalIP) {
+      const suspiciousCheck = checkSuspiciousContent(sanitizedData || {})
+      console.log(`🔍 [SECURITY-DEBUG] suspiciousCheck.suspicious: ${suspiciousCheck.suspicious}`)
+      console.log(`🔍 [SECURITY-DEBUG] suspiciousCheck.reasons:`, suspiciousCheck.reasons)
+      if (!suspiciousCheck.suspicious) {
+        console.log(`🔍 [SECURITY-DEBUG] NO se detectó actividad sospechosa`)
+      }
+    }
 
-    // 7. Log de respuesta exitosa (solo para debugging)
+    // Log request if enabled
+    if (options.logRequests) {
+      console.log(`📝 [SECURITY] ${method} ${endpoint} from ${clientIP} - Fingerprint: ${fingerprint}`)
+    }
+
+    // Call the actual handler
+    const response = await handler(request, sanitizedData || rawData)
+
+    // Log response
     const processingTime = Date.now() - startTime
-    if (options.logRequests) {
-      console.log(`✅ [SECURITY] Response ${response.status} in ${processingTime}ms`)
-    }
+    console.log(`✅ [SECURITY] Response ${response.status} in ${processingTime}ms`)
 
     return response
   } catch (error) {
     const processingTime = Date.now() - startTime
+    console.error(`❌ [SECURITY] Error in security middleware:`, error)
 
-    // Log de error crítico del sistema
-    await logSecurityEvent.systemError(clientIP, endpoint, method, `Critical system error: ${error}`, processingTime)
+    await logSecurityEvent.systemError(
+      clientIP,
+      endpoint,
+      method,
+      `Security middleware error: ${error}`,
+      processingTime,
+    )
 
-    const errorResponse = NextResponse.json({ message: "Error interno del servidor" }, { status: 500 })
-
-    // Aplicar headers de seguridad incluso en errores
-    Object.entries(securityHeaders).forEach(([key, value]) => {
-      errorResponse.headers.set(key, value)
-    })
-
-    return errorResponse
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

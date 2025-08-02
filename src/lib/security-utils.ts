@@ -32,12 +32,42 @@ export function getSecurityHeaders() {
   }
 }
 
+// Verificar si estamos en desarrollo
+function isDevelopment(): boolean {
+  return process.env.NODE_ENV === "development" || process.env.NODE_ENV !== "production"
+}
+
 // Detectar actividad sospechosa
 export function detectSuspiciousActivity(request: NextRequest, data?: any): { suspicious: boolean; reasons: string[] } {
   const reasons: string[] = []
   const userAgent = request.headers.get("user-agent") || ""
   const referer = request.headers.get("referer") || ""
+  const clientIP = getClientIP(request)
 
+  // En desarrollo, ser menos estricto con localhost/127.0.0.1/::1
+  if (isDevelopment() && (clientIP === "::1" || clientIP === "127.0.0.1" || clientIP === "localhost")) {
+    console.log("🔧 [SECURITY] Modo desarrollo detectado, relajando validaciones para IP local:", clientIP)
+    // Solo verificar patrones realmente peligrosos en desarrollo
+    if (data) {
+      const dataString = JSON.stringify(data).toLowerCase()
+
+      // Solo patrones críticos en desarrollo
+      const criticalPatterns = ["drop table", "delete from", "'; --", "<script", "javascript:", "eval("]
+
+      criticalPatterns.forEach((pattern) => {
+        if (dataString.includes(pattern)) {
+          reasons.push(`Patrón crítico detectado: ${pattern}`)
+        }
+      })
+    }
+
+    return {
+      suspicious: reasons.length > 0,
+      reasons,
+    }
+  }
+
+  // Validaciones completas para producción
   // 1. User-Agent sospechoso
   const suspiciousUserAgents = ["curl", "wget", "python", "bot", "crawler", "spider", "scraper", "postman", "insomnia"]
 
@@ -178,17 +208,73 @@ export function validateTicketCode(code: string): boolean {
 }
 
 export function validatePaymentReference(reference: string): boolean {
-  // Formato esperado: números, 6-20 caracteres
-  return /^[0-9]{6,20}$/.test(reference)
+  // Formato esperado: letras y números, 6-30 caracteres (más flexible para referencias reales)
+  return /^[A-Za-z0-9]{6,30}$/.test(reference)
 }
 
 export function validatePhoneNumber(phone: string): boolean {
-  // Formato venezolano: 04XX-XXXXXXX
-  return /^04\d{2}-?\d{7}$/.test(phone)
+  // Formato venezolano: 04 + 9 dígitos (11 dígitos total)
+  return /^04\d{9}$/.test(phone)
 }
 
 export function validateAmount(amount: number): boolean {
   return amount > 0 && amount <= 1000000 && Number.isFinite(amount)
+}
+
+// Validar datos de pago completos
+export function validatePaymentData(data: any): { valid: boolean; errors: string[] } {
+  const errors: string[] = []
+
+  if (!data || typeof data !== "object") {
+    errors.push("Datos de pago inválidos")
+    return { valid: false, errors }
+  }
+
+  // Validar código de ticket
+  if (!data.codigoTicket || !validateTicketCode(data.codigoTicket)) {
+    errors.push("Código de ticket inválido")
+  }
+
+  // Validar tipo de pago
+  const tiposPagoValidos = ["pago_movil", "transferencia", "efectivo_bs", "efectivo_usd"]
+  if (!data.tipoPago || !tiposPagoValidos.includes(data.tipoPago)) {
+    errors.push("Tipo de pago inválido")
+  }
+
+  // Validar monto
+  if (!data.montoPagado || !validateAmount(Number(data.montoPagado))) {
+    errors.push("Monto de pago inválido")
+  }
+
+  // Validaciones específicas para pagos electrónicos
+  if (data.tipoPago === "pago_movil" || data.tipoPago === "transferencia") {
+    if (!data.referenciaTransferencia || !validatePaymentReference(data.referenciaTransferencia)) {
+      errors.push("Referencia de transferencia inválida")
+    }
+
+    if (!data.banco || typeof data.banco !== "string" || data.banco.trim().length === 0) {
+      errors.push("Banco requerido")
+    }
+
+    if (!data.telefono || !validatePhoneNumber(data.telefono)) {
+      errors.push("Número de teléfono inválido")
+    }
+
+    if (!data.numeroIdentidad || typeof data.numeroIdentidad !== "string" || data.numeroIdentidad.trim().length === 0) {
+      errors.push("Número de identidad requerido")
+    }
+  }
+
+  // Validar tiempo de salida
+  const tiemposSalidaValidos = ["now", "5min", "10min", "15min", "20min", "30min", "45min", "60min"]
+  if (data.tiempoSalida && !tiemposSalidaValidos.includes(data.tiempoSalida)) {
+    errors.push("Tiempo de salida inválido")
+  }
+
+  return {
+    valid: errors.length === 0,
+    errors,
+  }
 }
 
 // Generar fingerprint del request para tracking

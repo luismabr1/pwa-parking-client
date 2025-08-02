@@ -19,6 +19,7 @@ import {
   X,
   ImageIcon,
   Bell,
+  Check,
 } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { formatCurrency } from "@/lib/utils"
@@ -57,6 +58,33 @@ const exitTimeOptions = [
   { value: "60min", label: "En 1 hora", minutes: 60 },
 ]
 
+// Función para validar teléfono en tiempo real
+const validatePhoneNumber = (phone: string): { isValid: boolean; message: string } => {
+  if (!phone) {
+    return { isValid: false, message: "El teléfono es requerido" }
+  }
+
+  const cleanPhone = phone.replace(/[-\s]/g, "") // Remover guiones y espacios
+
+  if (cleanPhone.length < 11) {
+    return { isValid: false, message: `Faltan ${11 - cleanPhone.length} dígitos (formato: 04XX-XXXXXXX)` }
+  }
+
+  if (cleanPhone.length > 11) {
+    return { isValid: false, message: `Sobran ${cleanPhone.length - 11} dígitos (formato: 04XX-XXXXXXX)` }
+  }
+
+  if (!cleanPhone.startsWith("04")) {
+    return { isValid: false, message: "Debe comenzar con 04" }
+  }
+
+  if (!/^04\d{9}$/.test(cleanPhone)) {
+    return { isValid: false, message: "Solo se permiten números (formato: 04XX-XXXXXXX)" }
+  }
+
+  return { isValid: true, message: "Número válido" }
+}
+
 export default function PaymentForm({ ticket }: PaymentFormProps) {
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -74,6 +102,12 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [showNotificationPrompt, setShowNotificationPrompt] = useState(false)
+
+  // Estado para validación de teléfono en tiempo real
+  const [phoneValidation, setPhoneValidation] = useState<{ isValid: boolean; message: string }>({
+    isValid: false,
+    message: "",
+  })
 
   // Hook para notificaciones del ticket
   const {
@@ -144,6 +178,12 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
       ...prev,
       [name]: value,
     }))
+
+    // Validación en tiempo real para el teléfono
+    if (name === "telefono") {
+      const validation = validatePhoneNumber(value)
+      setPhoneValidation(validation)
+    }
   }
 
   const handleBankChange = (value: string) => {
@@ -198,8 +238,18 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
   const convertImageToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader()
-      reader.onload = () => resolve(reader.result as string)
-      reader.onerror = reject
+      reader.onload = () => {
+        const result = reader.result as string
+        console.log(`🖼️ [FRONTEND] Imagen convertida - Archivo: ${file.name}`)
+        console.log(`🖼️ [FRONTEND] Tamaño original: ${file.size} bytes`)
+        console.log(`🖼️ [FRONTEND] Base64 longitud: ${result.length} caracteres`)
+        console.log(`🖼️ [FRONTEND] Primeros 100 chars: ${result.substring(0, 100)}`)
+        resolve(result)
+      }
+      reader.onerror = (error) => {
+        console.error("❌ [FRONTEND] Error convirtiendo imagen:", error)
+        reject(error)
+      }
       reader.readAsDataURL(file)
     })
   }
@@ -240,31 +290,46 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
         imagenComprobante = await convertImageToBase64(selectedImage)
       }
 
+      const paymentData = {
+        codigoTicket: ticket.codigoTicket,
+        tipoPago: paymentType,
+        montoPagado: formData.montoPagado,
+        tiempoSalida: formData.tiempoSalida || "now",
+        referenciaTransferencia: formData.referenciaTransferencia || undefined,
+        banco: formData.banco || undefined,
+        telefono: formData.telefono || undefined,
+        numeroIdentidad: formData.numeroIdentidad || undefined,
+        imagenComprobante: imagenComprobante || undefined,
+      }
+
+      // Limpiar campos vacíos para pagos en efectivo
+      if (paymentType?.startsWith("efectivo")) {
+        delete paymentData.referenciaTransferencia
+        delete paymentData.banco
+        delete paymentData.telefono
+        delete paymentData.numeroIdentidad
+      }
+
+      console.log("Enviando datos de pago:", paymentData)
+
       const response = await fetch("/api/process-payment", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          codigoTicket: ticket.codigoTicket,
-          tipoPago: paymentType,
-          montoPagado: formData.montoPagado,
-          tiempoSalida: formData.tiempoSalida,
-          referenciaTransferencia: formData.referenciaTransferencia,
-          banco: formData.banco,
-          telefono: formData.telefono,
-          numeroIdentidad: formData.numeroIdentidad,
-          imagenComprobante,
-        }),
+        body: JSON.stringify(paymentData),
       })
 
+      const responseData = await response.json()
+
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || "Error al procesar el pago")
+        console.error("Error response:", responseData)
+        throw new Error(responseData.message || "Error al procesar el pago")
       }
 
       setSuccess(true)
     } catch (err) {
+      console.error("Error en handleSubmit:", err)
       setError(err instanceof Error ? err.message : "Error al procesar el pago")
     } finally {
       setIsLoading(false)
@@ -279,7 +344,7 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
       return (
         formData.referenciaTransferencia.trim() !== "" &&
         formData.banco.trim() !== "" &&
-        formData.telefono.trim() !== "" &&
+        phoneValidation.isValid &&
         formData.numeroIdentidad.trim() !== "" &&
         formData.montoPagado > 0 &&
         formData.tiempoSalida
@@ -661,7 +726,7 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                     value={formData.referenciaTransferencia}
                     onChange={handleChange}
                     className="h-12 text-lg"
-                    placeholder="Ej. TR123456789"
+                    placeholder="Ej. 123456789"
                     required
                   />
                 </div>
@@ -688,15 +753,38 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                   <label htmlFor="telefono" className="text-sm font-medium">
                     Teléfono
                   </label>
-                  <Input
-                    id="telefono"
-                    name="telefono"
-                    value={formData.telefono}
-                    onChange={handleChange}
-                    className="h-12 text-lg"
-                    placeholder="Ej. 0414-1234567"
-                    required
-                  />
+                  <div className="relative">
+                    <Input
+                      id="telefono"
+                      name="telefono"
+                      value={formData.telefono}
+                      onChange={handleChange}
+                      className={`h-12 text-lg pr-10 ${
+                        formData.telefono && phoneValidation.isValid
+                          ? "border-green-500 focus:border-green-500"
+                          : formData.telefono && !phoneValidation.isValid
+                            ? "border-red-500 focus:border-red-500"
+                            : ""
+                      }`}
+                      placeholder="Ej. 04141234567"
+                      required
+                    />
+                    {formData.telefono && (
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                        {phoneValidation.isValid ? (
+                          <Check className="h-5 w-5 text-green-500" />
+                        ) : (
+                          <AlertCircle className="h-5 w-5 text-red-500" />
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  {formData.telefono && (
+                    <p className={`text-sm ${phoneValidation.isValid ? "text-green-600" : "text-red-600"}`}>
+                      {phoneValidation.message}
+                    </p>
+                  )}
+                  <p className="text-xs text-muted-foreground">Formato: 04XX-XXXXXXX (11 dígitos total)</p>
                 </div>
 
                 <div className="space-y-2">
@@ -709,7 +797,7 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                     value={formData.numeroIdentidad}
                     onChange={handleChange}
                     className="h-12 text-lg"
-                    placeholder="Ej. V-12345678"
+                    placeholder="Ej. V12345678"
                     required
                   />
                 </div>
@@ -948,10 +1036,10 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
       {/* Dialog para prompt de notificaciones */}
       <Dialog open={showNotificationPrompt} onOpenChange={setShowNotificationPrompt}>
         <DialogContent className="sm:max-w-md bg-background border-border p-4 shadow-2xl">
-          <DialogHeader className="sr-only">
+          <DialogHeader>
             <DialogTitle>Activar Notificaciones</DialogTitle>
-            <DialogDescription id="dialog-description">
-              Configurar notificaciones para el ticket {ticket.codigoTicket}
+            <DialogDescription>
+              ¿Te gustaría recibir notificaciones sobre el estado de tu pago para el ticket {ticket.codigoTicket}?
             </DialogDescription>
           </DialogHeader>
           <NotificationPrompt

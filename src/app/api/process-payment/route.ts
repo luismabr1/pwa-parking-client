@@ -7,6 +7,7 @@ import {
   validatePaymentReference,
   validateAmount,
   validatePhoneNumber,
+  getClientIP,
 } from "@/lib/security-utils"
 import { logSecurityEvent } from "@/lib/security-logger"
 
@@ -30,41 +31,209 @@ function formatCurrency(amount: number, currency = "USD"): string {
   }).format(amount)
 }
 
+// Verificar si estamos en desarrollo
+function isDevelopment(): boolean {
+  return process.env.NODE_ENV === "development" || process.env.NODE_ENV !== "production"
+}
+
 async function uploadImageToCloudinary(base64Image: string, ticketCode: string): Promise<string> {
+  const isDevMode = isDevelopment()
+
   try {
     console.log("📤 [PROCESS-PAYMENT] Subiendo imagen a Cloudinary para ticket:", ticketCode)
+    console.log("📤 [PROCESS-PAYMENT] Modo desarrollo:", isDevMode)
 
-    const uploadResponse = await cloudinary.uploader.upload(base64Image, {
+    // Limpiar y validar el formato base64
+    let cleanBase64 = base64Image
+
+    console.log("📤 [PROCESS-PAYMENT] Imagen original - longitud:", base64Image.length)
+    console.log("📤 [PROCESS-PAYMENT] Imagen original - primeros 100 chars:", base64Image.substring(0, 100))
+
+    // Si la imagen viene con el prefijo data:image, lo removemos
+    if (base64Image.startsWith("data:image/")) {
+      const base64Index = base64Image.indexOf(",")
+      if (base64Index !== -1) {
+        cleanBase64 = base64Image.substring(base64Index + 1)
+        console.log("📤 [PROCESS-PAYMENT] Prefijo data: removido, nueva longitud:", cleanBase64.length)
+      }
+    }
+
+    // Validar que el base64 no esté vacío - ser más estricto con el tamaño mínimo
+    const minLength = isDevMode ? 500 : 5000 // Imagen muy pequeña indica problema
+
+    if (!cleanBase64 || cleanBase64.length < minLength) {
+      const errorMsg = `Imagen base64 muy pequeña o inválida (${cleanBase64.length} chars, mínimo ${minLength}). Esto indica que la imagen está truncada o corrupta.`
+      console.error("❌ [PROCESS-PAYMENT]", errorMsg)
+
+      if (isDevMode) {
+        console.log("⚠️ [PROCESS-PAYMENT] En desarrollo: continuando sin imagen debido a tamaño insuficiente")
+        return null
+      }
+
+      throw new Error(errorMsg)
+    }
+
+    // Validar que sea base64 válido
+    let buffer: Buffer
+    try {
+      // Intentar decodificar para validar
+      buffer = Buffer.from(cleanBase64, "base64")
+      console.log("📤 [PROCESS-PAYMENT] Base64 decodificado exitosamente, tamaño buffer:", buffer.length)
+
+      // Una imagen JPEG mínima debe tener al menos 1KB
+      if (buffer.length < 1024) {
+        const errorMsg = `Buffer de imagen muy pequeño (${buffer.length} bytes). La imagen está incompleta.`
+        console.error("❌ [PROCESS-PAYMENT]", errorMsg)
+
+        if (isDevMode) {
+          console.log("⚠️ [PROCESS-PAYMENT] En desarrollo: continuando sin imagen debido a buffer pequeño")
+          return null
+        }
+
+        throw new Error(errorMsg)
+      }
+
+      // Verificar que sea una imagen válida (debe empezar con magic bytes de JPEG o PNG)
+      const isJPEG = buffer[0] === 0xff && buffer[1] === 0xd8
+      const isPNG = buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47
+
+      console.log("📤 [PROCESS-PAYMENT] Tipo de imagen - JPEG:", isJPEG, "PNG:", isPNG)
+      console.log(
+        "📤 [PROCESS-PAYMENT] Primeros 10 bytes del buffer:",
+        Array.from(buffer.slice(0, 10))
+          .map((b) => `0x${b.toString(16).padStart(2, "0")}`)
+          .join(" "),
+      )
+
+      if (!isJPEG && !isPNG) {
+        const errorMsg = "La imagen no es un formato válido (JPEG/PNG) o está corrupta"
+        console.error("❌ [PROCESS-PAYMENT]", errorMsg)
+
+        if (isDevMode) {
+          console.log("⚠️ [PROCESS-PAYMENT] En desarrollo: continuando sin imagen debido a formato inválido")
+          return null
+        }
+
+        throw new Error(errorMsg)
+      }
+
+      // Verificar que el JPEG tenga el marcador de fin
+      if (isJPEG) {
+        const hasEndMarker = buffer[buffer.length - 2] === 0xff && buffer[buffer.length - 1] === 0xd9
+        console.log("📤 [PROCESS-PAYMENT] JPEG tiene marcador de fin:", hasEndMarker)
+
+        if (!hasEndMarker) {
+          const errorMsg = "La imagen JPEG está incompleta (falta marcador de fin)"
+          console.error("❌ [PROCESS-PAYMENT]", errorMsg)
+
+          if (isDevMode) {
+            console.log("⚠️ [PROCESS-PAYMENT] En desarrollo: continuando sin imagen debido a JPEG incompleto")
+            return null
+          }
+
+          throw new Error(errorMsg)
+        }
+      }
+    } catch (decodeError) {
+      console.error("❌ [PROCESS-PAYMENT] Error decodificando base64:", decodeError.message)
+
+      if (isDevMode) {
+        console.log("⚠️ [PROCESS-PAYMENT] En desarrollo: continuando sin imagen debido a error de decodificación")
+        return null
+      }
+
+      throw new Error("Formato base64 inválido")
+    }
+
+    // Crear el data URI correcto para Cloudinary
+    const dataUri = `data:image/jpeg;base64,${cleanBase64}`
+
+    console.log("📤 [PROCESS-PAYMENT] Enviando a Cloudinary...")
+    console.log("📤 [PROCESS-PAYMENT] Configuración Cloudinary:")
+    console.log("   Cloud name:", process.env.CLOUDINARY_CLOUD_NAME ? "✓" : "✗")
+    console.log("   API key:", process.env.CLOUDINARY_API_KEY ? "✓" : "✗")
+    console.log("   API secret:", process.env.CLOUDINARY_API_SECRET ? "✓" : "✗")
+
+    // Intentar subir con configuración más simple para debugging
+    const uploadOptions = {
       folder: "parking/comprobantes",
       public_id: `comprobante_${ticketCode}_${Date.now()}`,
-      resource_type: "image",
+      resource_type: "image" as const,
       format: "jpg",
       quality: "auto:good",
-      transformation: [{ width: 800, height: 600, crop: "limit" }, { quality: "auto:good" }, { fetch_format: "auto" }],
-    })
+    }
+
+    console.log("📤 [PROCESS-PAYMENT] Opciones de subida:", uploadOptions)
+
+    const uploadResponse = await cloudinary.uploader.upload(dataUri, uploadOptions)
 
     console.log("✅ [PROCESS-PAYMENT] Imagen subida exitosamente:", uploadResponse.secure_url)
     return uploadResponse.secure_url
   } catch (error) {
     console.error("❌ [PROCESS-PAYMENT] Error subiendo imagen a Cloudinary:", error)
+    console.error("❌ [PROCESS-PAYMENT] Detalles del error:", {
+      message: error.message,
+      name: error.name,
+      http_code: error.http_code,
+      stack: error.stack?.split("\n").slice(0, 3).join("\n"), // Solo las primeras 3 líneas del stack
+    })
+
+    if (isDevMode) {
+      console.log("⚠️ [PROCESS-PAYMENT] En desarrollo: continuando sin imagen debido al error")
+      return null // En desarrollo, continuar sin imagen si falla
+    }
+
     throw new Error("Error al subir la imagen del comprobante")
   }
 }
 
 async function processPaymentHandler(request: NextRequest, sanitizedData: any) {
   const startTime = Date.now()
-  const clientIP = request.headers.get("x-forwarded-for")?.split(",")[0] || "unknown"
+  const clientIP = getClientIP(request)
+  const userAgent = request.headers.get("user-agent") || ""
+
+  // Detectar si estamos en desarrollo local
+  const isDevMode = isDevelopment()
+  const isLocalIP = clientIP === "::1" || clientIP === "127.0.0.1" || clientIP === "localhost"
+
+  console.log("💰 [PROCESS-PAYMENT] ===== INICIANDO PROCESO DE PAGO =====")
+  console.log("🕐 [PROCESS-PAYMENT] Timestamp:", new Date().toISOString())
+
+  if (isDevMode) {
+    console.log(`🔍 [PROCESS-PAYMENT-DEBUG] isDevMode: ${isDevMode}`)
+    console.log(`🔍 [PROCESS-PAYMENT-DEBUG] isLocalIP: ${isLocalIP}`)
+    console.log(`🔍 [PROCESS-PAYMENT-DEBUG] clientIP: ${clientIP}`)
+  }
 
   try {
-    console.log("💰 [PROCESS-PAYMENT] ===== INICIANDO PROCESO DE PAGO =====")
-    console.log("🕐 [PROCESS-PAYMENT] Timestamp:", new Date().toISOString())
-
     // Validar datos de pago
     const validation = validatePaymentData(sanitizedData)
+
+    if (isDevMode) {
+      console.log(`🔍 [PROCESS-PAYMENT-DEBUG] validation.valid: ${validation.valid}`)
+      console.log(`🔍 [PROCESS-PAYMENT-DEBUG] validation.errors:`, validation.errors)
+    }
+
     if (!validation.valid) {
-      console.error("❌ [PROCESS-PAYMENT] Validación fallida:", validation.errors)
+      if (isDevMode && isLocalIP) {
+        console.log(
+          `⚠️ [PROCESS-PAYMENT] Datos inválidos en desarrollo (NO se registrará como malicioso):`,
+          validation.errors,
+        )
+      } else {
+        await logSecurityEvent.maliciousRequest(
+          clientIP,
+          "/api/process-payment",
+          "POST",
+          `Invalid payment data: ${validation.errors.join(", ")}`,
+          sanitizedData,
+          userAgent,
+        )
+      }
+
       return NextResponse.json(
         {
+          success: false,
           message: "Datos de pago inválidos",
           errors: validation.errors,
         },
@@ -72,57 +241,80 @@ async function processPaymentHandler(request: NextRequest, sanitizedData: any) {
       )
     }
 
-    // Validaciones de seguridad adicionales
-    if (!validatePaymentReference(sanitizedData.numeroReferencia)) {
-      await logSecurityEvent.maliciousRequest(
-        clientIP,
-        "/api/process-payment",
-        "POST",
-        "Formato de referencia de pago inválido",
-        { numeroReferencia: sanitizedData.numeroReferencia },
-        request.headers.get("user-agent") || "",
-      )
-      return NextResponse.json({ message: "Formato de referencia inválido" }, { status: 400 })
+    // Validaciones de seguridad adicionales SOLO para pagos electrónicos
+    const { tipoPago, referenciaTransferencia, montoPagado, telefono } = sanitizedData
+
+    if (isDevMode) {
+      console.log(`🔍 [PROCESS-PAYMENT-DEBUG] tipoPago: "${tipoPago}"`)
+      console.log(`🔍 [PROCESS-PAYMENT-DEBUG] referenciaTransferencia: "${referenciaTransferencia}"`)
+      console.log(`🔍 [PROCESS-PAYMENT-DEBUG] montoPagado: "${montoPagado}"`)
+      console.log(`🔍 [PROCESS-PAYMENT-DEBUG] telefono: "${telefono}"`)
     }
 
-    if (!validateAmount(sanitizedData.monto)) {
-      await logSecurityEvent.maliciousRequest(
-        clientIP,
-        "/api/process-payment",
-        "POST",
-        "Monto de pago inválido o sospechoso",
-        { monto: sanitizedData.monto },
-        request.headers.get("user-agent") || "",
-      )
-      return NextResponse.json({ message: "Monto inválido" }, { status: 400 })
+    // Solo validar referencia para pagos electrónicos
+    if (
+      (tipoPago === "pago_movil" || tipoPago === "transferencia") &&
+      !validatePaymentReference(referenciaTransferencia)
+    ) {
+      if (isDevMode && isLocalIP) {
+        console.log(
+          `⚠️ [PROCESS-PAYMENT] Referencia inválida en desarrollo (NO se registrará como malicioso): ${referenciaTransferencia}`,
+        )
+      } else {
+        await logSecurityEvent.maliciousRequest(
+          clientIP,
+          "/api/process-payment",
+          "POST",
+          "Formato de referencia de pago inválido",
+          { numeroReferencia: referenciaTransferencia },
+          request.headers.get("user-agent") || "",
+        )
+      }
+      return NextResponse.json({ success: false, message: "Formato de referencia inválido" }, { status: 400 })
     }
 
-    if (sanitizedData.telefono && !validatePhoneNumber(sanitizedData.telefono)) {
-      await logSecurityEvent.maliciousRequest(
-        clientIP,
-        "/api/process-payment",
-        "POST",
-        "Formato de teléfono inválido",
-        { telefono: sanitizedData.telefono },
-        request.headers.get("user-agent") || "",
-      )
-      return NextResponse.json({ message: "Formato de teléfono inválido" }, { status: 400 })
+    // Validar monto pagado (usar montoPagado, no monto)
+    if (!validateAmount(Number(montoPagado))) {
+      if (isDevMode && isLocalIP) {
+        console.log(
+          `⚠️ [PROCESS-PAYMENT] Monto inválido en desarrollo (NO se registrará como malicioso): ${montoPagado}`,
+        )
+      } else {
+        await logSecurityEvent.maliciousRequest(
+          clientIP,
+          "/api/process-payment",
+          "POST",
+          "Monto de pago inválido o sospechoso",
+          { monto: montoPagado },
+          request.headers.get("user-agent") || "",
+        )
+      }
+      return NextResponse.json({ success: false, message: "Monto inválido" }, { status: 400 })
+    }
+
+    // Solo validar teléfono para pagos electrónicos y si no está vacío
+    if ((tipoPago === "pago_movil" || tipoPago === "transferencia") && telefono && !validatePhoneNumber(telefono)) {
+      if (isDevMode && isLocalIP) {
+        console.log(
+          `⚠️ [PROCESS-PAYMENT] Teléfono inválido en desarrollo (NO se registrará como malicioso): ${telefono}`,
+        )
+      } else {
+        await logSecurityEvent.maliciousRequest(
+          clientIP,
+          "/api/process-payment",
+          "POST",
+          "Formato de teléfono inválido",
+          { telefono: telefono },
+          request.headers.get("user-agent") || "",
+        )
+      }
+      return NextResponse.json({ success: false, message: "Formato de teléfono inválido" }, { status: 400 })
     }
 
     const client = await clientPromise
     const db = client.db("parking")
 
-    const {
-      codigoTicket,
-      tipoPago,
-      referenciaTransferencia,
-      banco,
-      telefono,
-      numeroIdentidad,
-      montoPagado,
-      tiempoSalida,
-      imagenComprobante,
-    } = sanitizedData
+    const { codigoTicket, banco, numeroIdentidad, tiempoSalida, imagenComprobante } = sanitizedData
 
     console.log("📥 [PROCESS-PAYMENT] Datos validados:")
     console.log("   Código Ticket:", codigoTicket)
@@ -138,7 +330,7 @@ async function processPaymentHandler(request: NextRequest, sanitizedData: any) {
 
     if (!ticket) {
       console.error("❌ [PROCESS-PAYMENT] Ticket no encontrado:", codigoTicket)
-      return NextResponse.json({ message: "Ticket no encontrado" }, { status: 404 })
+      return NextResponse.json({ success: false, message: "Ticket no encontrado" }, { status: 404 })
     }
 
     console.log("✅ [PROCESS-PAYMENT] Ticket encontrado:")
@@ -163,7 +355,7 @@ async function processPaymentHandler(request: NextRequest, sanitizedData: any) {
       }
 
       console.error("❌ [PROCESS-PAYMENT] Estado de ticket inválido:", errorMsg)
-      return NextResponse.json({ message: errorMsg }, { status: 400 })
+      return NextResponse.json({ success: false, message: errorMsg }, { status: 400 })
     }
 
     const now = new Date()
@@ -220,7 +412,7 @@ async function processPaymentHandler(request: NextRequest, sanitizedData: any) {
     } else {
       const errorMsg = "Tipo de pago no válido"
       console.error("❌ [PROCESS-PAYMENT] Tipo de pago inválido:", tipoPago)
-      return NextResponse.json({ message: errorMsg }, { status: 400 })
+      return NextResponse.json({ success: false, message: errorMsg }, { status: 400 })
     }
 
     // Validar monto contra el calculado
@@ -238,7 +430,7 @@ async function processPaymentHandler(request: NextRequest, sanitizedData: any) {
     ) {
       const errorMsg = `El monto pagado (${formatCurrency(montoEnBs, "VES")} Bs) no coincide con el monto calculado (${formatCurrency(montoCalculadoBs, "VES")} Bs). Por favor, verifique el monto e intente de nuevo.`
       console.error("❌ [PROCESS-PAYMENT] Monto no coincide:", errorMsg)
-      return NextResponse.json({ message: errorMsg }, { status: 400 })
+      return NextResponse.json({ success: false, message: errorMsg }, { status: 400 })
     }
 
     // Buscar carro asociado
@@ -266,18 +458,13 @@ async function processPaymentHandler(request: NextRequest, sanitizedData: any) {
     // Subir imagen a Cloudinary si existe
     let urlImagenComprobante = null
     if (imagenComprobante) {
-      try {
-        console.log("📸 [PROCESS-PAYMENT] Procesando imagen del comprobante...")
-        urlImagenComprobante = await uploadImageToCloudinary(imagenComprobante, codigoTicket)
+      console.log("📸 [PROCESS-PAYMENT] Procesando imagen del comprobante...")
+      urlImagenComprobante = await uploadImageToCloudinary(imagenComprobante, codigoTicket)
+
+      if (urlImagenComprobante) {
         console.log("✅ [PROCESS-PAYMENT] Imagen subida exitosamente")
-      } catch (error) {
-        console.error("❌ [PROCESS-PAYMENT] Error subiendo imagen:", error)
-        return NextResponse.json(
-          {
-            message: "Error al subir la imagen del comprobante. Intente nuevamente.",
-          },
-          { status: 500 },
-        )
+      } else {
+        console.log("⚠️ [PROCESS-PAYMENT] Continuando sin imagen (desarrollo)")
       }
     }
 
@@ -434,6 +621,7 @@ async function processPaymentHandler(request: NextRequest, sanitizedData: any) {
     console.log("   Tiempo de procesamiento:", processingTime + "ms")
 
     const response = NextResponse.json({
+      success: true,
       message: "Pago registrado exitosamente",
       pagoId: pagoResult.insertedId,
       tipoPago,
@@ -453,16 +641,23 @@ async function processPaymentHandler(request: NextRequest, sanitizedData: any) {
     return response
   } catch (error) {
     const processingTime = Date.now() - startTime
-
     console.error("❌ [PROCESS-PAYMENT] ===== ERROR CRÍTICO =====")
     console.error("   Tiempo transcurrido:", processingTime + "ms")
     console.error("   Error:", error.message)
 
+    // Log de error del sistema
+    await logSecurityEvent.systemError(
+      clientIP,
+      "/api/process-payment",
+      "POST",
+      `Payment processing error: ${error}`,
+      processingTime,
+    )
+
     return NextResponse.json(
       {
+        success: false,
         message: "Error al procesar el pago",
-        error: error.message,
-        processingTime,
       },
       { status: 500 },
     )
@@ -472,7 +667,7 @@ async function processPaymentHandler(request: NextRequest, sanitizedData: any) {
 export async function POST(request: NextRequest) {
   return withSecurity(request, processPaymentHandler, {
     rateLimitType: "CRITICAL",
-    requireValidOrigin: true,
+    requireValidOrigin: false,
     sanitizeBody: true,
     logRequests: true,
   })
