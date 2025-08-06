@@ -750,7 +750,7 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
               )}
 
               <div className="flex gap-4 pt-4">
-                <Button onClick={prevStep} variant="outline" className="flex-1 h-12 text-lg bg-transparent">
+                <Button onClick={prevStep} variant="outline" className="flex-1 h-12 text-lg">
                   <ArrowLeft className="mr-2 h-5 w-5" /> Anterior
                 </Button>
                 <Button onClick={nextStep} className="flex-1 h-12 text-lg">
@@ -1018,7 +1018,7 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
               </div>
 
               <div className="flex gap-4 pt-4">
-                <Button onClick={prevStep} variant="outline" className="flex-1 h-12 text-lg bg-transparent">
+                <Button onClick={prevStep} variant="outline" className="flex-1 h-12 text-lg">
                   <ArrowLeft className="mr-2 h-5 w-5" /> Anterior
                 </Button>
                 <Button onClick={nextStep} className="flex-1 h-12 text-lg" disabled={!isFormValid()}>
@@ -1148,7 +1148,7 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                   </div>
 
                   <div className="flex flex-col sm:flex-row gap-3 pt-4">
-                    <Button onClick={prevStep} variant="outline" className="flex-1 h-12 text-lg bg-transparent">
+                    <Button onClick={prevStep} variant="outline" className="flex-1 h-12 text-lg">
                       <ArrowLeft className="mr-2 h-5 w-5" /> Corregir Datos
                     </Button>
                     <Button
