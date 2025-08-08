@@ -1277,7 +1277,7 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
         <DialogContent className="sm:max-w-md bg-background border-border p-4 shadow-2xl">
           <DialogHeader>
             <DialogTitle>Activar Notificaciones</DialogTitle>
-            <DialogDescription>
+            <DialogDescription>npm 
               ¿Te gustaría recibir notificaciones sobre el estado de tu pago para el ticket {ticket.codigoTicket}?
             </DialogDescription>
           </DialogHeader>

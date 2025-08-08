@@ -1,4 +1,4 @@
-const CACHE_NAME = "parking-pwa-client-v4" // Incrementar versión cuando hay cambios
+const CACHE_NAME = "parking-pwa-client-v5" // Incrementar versión cuando hay cambios
 const urlsToCache = ["/", "/manifest.json", "/offline.html"]
 
 // Install event
