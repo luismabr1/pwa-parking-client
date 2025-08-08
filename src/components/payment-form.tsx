@@ -7,21 +7,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
-import {
-  AlertCircle,
-  CheckCircle2,
-  ArrowLeft,
-  ArrowRight,
-  RefreshCw,
-  Clock,
-  Eye,
-  Upload,
-  X,
-  ImageIcon,
-  Bell,
-  Check,
-  Copy
-} from "lucide-react"
+import { AlertCircle, CheckCircle2, ArrowLeft, ArrowRight, RefreshCw, Clock, Eye, Upload, X, ImageIcon, Bell, Check, Copy } from 'lucide-react'
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { formatCurrency } from "@/lib/utils"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -1267,13 +1253,13 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                     </div>
                   </div>
 
-                  <div className="flex flex-col sm:flex-row gap-3 pt-4">
-                    <Button onClick={prevStep} variant="outline" className="flex-1 h-12 text-lg">
+                  <div className="flex flex-col gap-3 pt-4">
+                    <Button onClick={prevStep} variant="outline" className="w-full h-12 text-lg">
                       <ArrowLeft className="mr-2 h-5 w-5" /> Corregir Datos
                     </Button>
                     <Button
                       onClick={checkNotificationsBeforePayment}
-                      className="flex-1 h-12 text-lg"
+                      className="w-full h-12 text-lg"
                       disabled={isLoading}
                     >
                       {isLoading ? "Registrando..." : "Confirmar Pago"} <CheckCircle2 className="ml-2 h-5 w-5" />
