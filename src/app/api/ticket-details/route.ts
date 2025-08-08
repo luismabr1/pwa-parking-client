@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import clientPromise from "@/lib/mongodb";
 import { calculateParkingFee } from "@/lib/utils";
 
-export const dynamic = "force-dynamic"; // Mark as dynamic to handle request.url
+export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   try {
@@ -37,7 +37,15 @@ export async function GET(request: Request) {
       horaEntrada = new Date(ticket.horaEntrada);
       montoCalculado = calculateParkingFee(horaEntrada);
     } else if (ticket.estado === "disponible") {
-      return NextResponse.json({ message: "Este ticket no tiene un vehículo asignado" }, { status: 404 });
+      const car = await db.collection("cars").findOne({ ticketAsociado: ticketCode });
+      if (!car) {
+        return NextResponse.json({ message: "Este ticket no tiene un vehículo asignado" }, { status: 404 });
+      } else {
+        return NextResponse.json(
+          { message: "Este ticket está marcado como disponible pero tiene un vehículo asignado. Contacte al personal." },
+          { status: 404 }
+        );
+      }
     }
 
     let carInfo = null;

@@ -336,6 +336,54 @@ button.bg-destructive:hover,
   padding: 0;
 }
 
+/* Asegurar consistencia en botones con íconos */
+.btn-outline {
+  border: 1px solid hsl(var(--input));
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+.btn-outline:hover {
+  background-color: hsl(var(--accent));
+  color: hsl(var(--accent-foreground));
+}
+
+/* Estilo específico para íconos dentro de botones outline */
+.btn-outline svg {
+  color: hsl(var(--foreground)); /* Negro en modo claro */
+}
+
+.dark .btn-outline svg {
+  color: hsl(var(--foreground)); /* Blanco en modo oscuro por defecto */
+}
+
+/* Ajuste específico para íconos de copiar en modo oscuro */
+.dark .btn-outline [data-icon="copy"] {
+  color: hsl(0 0% 0%); /* Negro puro en modo oscuro */
+}
+
+/* Asegurar que el tamaño y espaciado del ícono coincida con Copiar Todo */
+.btn-outline {
+  padding: 0;
+  height: 1.5rem; /* Ajuste para que coincida con h-6 (24px) */
+  width: 1.5rem;
+}
+
+.btn-outline .btn-icon {
+  height: 1.5rem;
+  width: 1.5rem;
+  padding: 0;
+}
+
+/* Asegurar que los botones outline tengan un borde consistente */
+.btn-outline {
+  border-color: hsl(var(--border));
+}
+
+.dark .btn-outline {
+  border-color: hsl(var(--border));
+}
+
 /* Loading animations */
 @keyframes spin {
   to {
