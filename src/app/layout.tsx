@@ -1,12 +1,13 @@
 import type React from "react"
 import type { Metadata, Viewport } from "next"
-import { Inter } from "next/font/google"
+import { Inter } from 'next/font/google'
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
 import { Toaster as Sonner } from "@/components/ui/sonner"
 import { APP_CONFIG, getLogoSrc } from "@/config/app-config"
 import { Analytics } from "@vercel/analytics/next"
+import UpdatePrompt from "@/components/notifications/update-prompt"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -139,6 +140,13 @@ export default function RootLayout({
                   navigator.serviceWorker.register('/sw.js')
                     .then(function(registration) {
                       console.log('✅ SW registrado:', registration.scope);
+                      
+                      // Verificar actualizaciones cada 30 segundos
+                      setInterval(() => {
+                        registration.update().catch(err => {
+                          console.log('Error verificando actualizaciones:', err);
+                        });
+                      }, 30000);
                     })
                     .catch(function(error) {
                       console.log('❌ SW falló:', error);
@@ -151,6 +159,7 @@ export default function RootLayout({
       </head>
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          <UpdatePrompt />
           {children}
           <Toaster />
           <Sonner />
