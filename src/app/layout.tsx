@@ -1,17 +1,19 @@
 import type React from "react"
 import type { Metadata, Viewport } from "next"
-import { Inter } from 'next/font/google'
+import { Inter } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
 import { Toaster as Sonner } from "@/components/ui/sonner"
-import { APP_CONFIG, getLogoSrc } from "@/config/app-config"
+import { APP_CONFIG, getFaviconSrc, getSplashLogoSrc } from "@/config/app-config"
 import { Analytics } from "@vercel/analytics/next"
 import UpdatePrompt from "@/components/notifications/update-prompt"
+import { Suspense } from "react"
 
 const inter = Inter({ subsets: ["latin"] })
 
-const logoSrc = getLogoSrc()
+const faviconSrc = getFaviconSrc()
+const splashLogoSrc = getSplashLogoSrc()
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
 
 export const metadata: Metadata = {
@@ -39,7 +41,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: logoSrc,
+        url: splashLogoSrc,
         width: 512,
         height: 512,
         alt: APP_CONFIG.logo.alt,
@@ -50,7 +52,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: APP_CONFIG.app.name,
     description: APP_CONFIG.app.description,
-    images: [logoSrc],
+    images: [splashLogoSrc],
   },
   appleWebApp: {
     capable: true,
@@ -58,8 +60,16 @@ export const metadata: Metadata = {
     title: APP_CONFIG.app.shortName,
     startupImage: [
       {
-        url: logoSrc,
+        url: splashLogoSrc,
         media: "(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)",
+      },
+      {
+        url: splashLogoSrc,
+        media: "(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2)",
+      },
+      {
+        url: splashLogoSrc,
+        media: "(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)",
       },
     ],
   },
@@ -82,16 +92,21 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       {
-        url: logoSrc,
-        sizes: "any",
-        type: logoSrc.startsWith("data:") ? "image/svg+xml" : "image/png",
+        url: faviconSrc,
+        sizes: "32x32",
+        type: faviconSrc.startsWith("data:") ? "image/svg+xml" : "image/png",
+      },
+      {
+        url: faviconSrc,
+        sizes: "16x16",
+        type: faviconSrc.startsWith("data:") ? "image/svg+xml" : "image/png",
       },
     ],
     apple: [
       {
-        url: logoSrc,
+        url: splashLogoSrc,
         sizes: "180x180",
-        type: logoSrc.startsWith("data:") ? "image/svg+xml" : "image/png",
+        type: splashLogoSrc.startsWith("data:") ? "image/svg+xml" : "image/png",
       },
     ],
   },
@@ -128,8 +143,8 @@ export default function RootLayout({
         <meta name="msapplication-tap-highlight" content="no" />
 
         {/* Favicon y Apple Touch Icon */}
-        <link rel="apple-touch-icon" href={logoSrc} />
-        <link rel="icon" type={logoSrc.startsWith("data:") ? "image/svg+xml" : "image/png"} href={logoSrc} />
+        <link rel="apple-touch-icon" href={splashLogoSrc} />
+        <link rel="icon" type={faviconSrc.startsWith("data:") ? "image/svg+xml" : "image/png"} href={faviconSrc} />
 
         {/* Service Worker Registration */}
         <script
@@ -159,11 +174,13 @@ export default function RootLayout({
       </head>
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <UpdatePrompt />
-          {children}
-          <Toaster />
-          <Sonner />
-          <Analytics />
+          <Suspense fallback={null}>
+            <UpdatePrompt />
+            {children}
+            <Toaster />
+            <Sonner />
+            <Analytics />
+          </Suspense>
         </ThemeProvider>
       </body>
     </html>

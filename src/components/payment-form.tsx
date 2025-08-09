@@ -458,7 +458,7 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
       if (companySettings.transferencia.telefono)
         paymentData.push(`Teléfono: ${companySettings.transferencia.telefono}`);
     }
-    paymentData.push(`Monto a Pagar: ${formatCurrency(montoBs, "VES")} (${formatCurrency(ticket.montoCalculado)})`);
+    paymentData.push(`Monto a Pagar (Bs.): ${montoBs.toFixed(2)}`);
 
     const textToCopy = paymentData.join("\n");
     copyToClipboard(textToCopy, true);
@@ -840,6 +840,24 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                   )}
                 </div>
               )}
+            {/* Sección de Monto a Pagar */}
+              <div className="space-y-2">
+                <h4 className="font-medium text-sm text-foreground">Monto a Pagar</h4>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">Monto (Bs.):</span>
+                  <div className="flex items-center">
+                    <span className="text-sm font-medium">{formatCurrency(montoBs, "VES")}</span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => copyToClipboard(montoBs.toFixed(2))}
+                      className="ml-2 p-0 h-6 w-6 border border-border dark:border-border-dark"
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
             {!companySettings.pagoMovil.banco && !companySettings.transferencia.banco && (
               <div className="text-center text-muted-foreground py-2">
                 <p>No hay información de pago configurada</p>
@@ -1277,7 +1295,7 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
         <DialogContent className="sm:max-w-md bg-background border-border p-4 shadow-2xl">
           <DialogHeader>
             <DialogTitle>Activar Notificaciones</DialogTitle>
-            <DialogDescription>npm 
+            <DialogDescription>
               ¿Te gustaría recibir notificaciones sobre el estado de tu pago para el ticket {ticket.codigoTicket}?
             </DialogDescription>
           </DialogHeader>

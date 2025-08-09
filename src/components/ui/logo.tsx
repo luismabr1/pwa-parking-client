@@ -1,8 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
-import { APP_CONFIG, getLogoSrc } from "@/config/app-config"
+import { useTheme } from "next-themes"
+import { APP_CONFIG, getLogoSrc, getFaviconSrc } from "@/config/app-config"
 import { cn } from "@/lib/utils"
 
 interface LogoProps {
@@ -10,11 +11,24 @@ interface LogoProps {
   className?: string
   showText?: boolean
   variant?: "icon" | "full" | "favicon" | "hero"
+  forceTheme?: "light" | "dark"
 }
 
-export default function Logo({ size = 40, className = "", showText = false, variant = "icon" }: LogoProps) {
+export default function Logo({ size = 40, className = "", showText = false, variant = "icon", forceTheme }: LogoProps) {
   const [imageError, setImageError] = useState(false)
-  const logoSrc = getLogoSrc()
+  const [mounted, setMounted] = useState(false)
+  const { theme, systemTheme } = useTheme()
+
+  // Evitar hidration mismatch
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // Determinar el tema actual - usar "light" por defecto hasta que se monte
+  const currentTheme = mounted ? forceTheme || (theme === "system" ? systemTheme : theme) || "light" : "light"
+
+  // Obtener el logo según el tema y variante
+  const logoSrc = variant === "favicon" ? getFaviconSrc() : getLogoSrc(currentTheme as "light" | "dark")
 
   // Para diferentes variantes, usar tamaños específicos
   const logoSize = variant === "favicon" ? 32 : variant === "hero" ? 64 : size
@@ -47,10 +61,13 @@ export default function Logo({ size = 40, className = "", showText = false, vari
             fontSize: logoSize * 0.4,
           }}
           dangerouslySetInnerHTML={{
-            __html: `<svg width="${logoSize}" height="${logoSize}" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-              <rect width="100" height="100" fill="currentColor" rx="20"/>
-              <text x="50" y="55" fontFamily="Arial" fontSize="40" fill="white" textAnchor="middle" dominantBaseline="middle">${APP_CONFIG.logo.fallbackText}</text>
-            </svg>`,
+            __html: logoSrc
+              .replace("data:image/svg+xml,", "")
+              .replace(/%3C/g, "<")
+              .replace(/%3E/g, ">")
+              .replace(/%20/g, " ")
+              .replace(/%25/g, "%")
+              .replace(/%23/g, "#"),
           }}
         />
       ) : !imageError ? (
