@@ -7,7 +7,21 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
-import { AlertCircle, CheckCircle2, ArrowLeft, ArrowRight, RefreshCw, Clock, Eye, Upload, X, ImageIcon, Bell, Check, Copy } from 'lucide-react'
+import {
+  AlertCircle,
+  CheckCircle2,
+  ArrowLeft,
+  ArrowRight,
+  RefreshCw,
+  Clock,
+  Eye,
+  Upload,
+  X,
+  ImageIcon,
+  Bell,
+  Check,
+  Copy,
+} from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { formatCurrency } from "@/lib/utils"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -145,7 +159,7 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [showNotificationPrompt, setShowNotificationPrompt] = useState(false)
-  const [copySuccess, setCopySuccess] = useState<string | null>(null); // Estado para feedback de copiar
+  const [copySuccess, setCopySuccess] = useState<string | null>(null) // Estado para feedback de copiar
   // Estado para validación de teléfono en tiempo real
   const [phoneValidation, setPhoneValidation] = useState<{ isValid: boolean; message: string }>({
     isValid: false,
@@ -430,39 +444,38 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
     navigator.clipboard
       .writeText(text)
       .then(() => {
-        setCopySuccess(isFullCopy ? "Todos los datos copiados" : "Copiado");
-        setTimeout(() => setCopySuccess(null), 2000); // Limpia el mensaje después de 2 segundos
+        setCopySuccess(isFullCopy ? "Todos los datos copiados" : "Copiado")
+        setTimeout(() => setCopySuccess(null), 2000) // Limpia el mensaje después de 2 segundos
       })
       .catch((err) => {
-        console.error("Error al copiar al portapapeles:", err);
-        setError("No se pudo copiar. Por favor, intenta manualmente.");
-      });
-  };
+        console.error("Error al copiar al portapapeles:", err)
+        setError("No se pudo copiar. Por favor, intenta manualmente.")
+      })
+  }
 
   // Función para copiar todos los datos
   const copyAllData = () => {
-    if (!companySettings || !paymentType) return;
+    if (!companySettings || !paymentType) return
 
-    const paymentData = [];
+    const paymentData = []
     if (paymentType === "pago_movil" && companySettings.pagoMovil) {
-      if (companySettings.pagoMovil.banco) paymentData.push(`Banco: ${companySettings.pagoMovil.banco}`);
-      if (companySettings.pagoMovil.cedula) paymentData.push(`Cédula/RIF: ${companySettings.pagoMovil.cedula}`);
-      if (companySettings.pagoMovil.telefono) paymentData.push(`Teléfono: ${companySettings.pagoMovil.telefono}`);
+      if (companySettings.pagoMovil.banco) paymentData.push(`Banco: ${companySettings.pagoMovil.banco}`)
+      if (companySettings.pagoMovil.cedula) paymentData.push(`Cédula/RIF: ${companySettings.pagoMovil.cedula}`)
+      if (companySettings.pagoMovil.telefono) paymentData.push(`Teléfono: ${companySettings.pagoMovil.telefono}`)
     } else if (paymentType === "transferencia" && companySettings.transferencia) {
-      if (companySettings.transferencia.banco)
-        paymentData.push(`Banco: ${companySettings.transferencia.banco}`);
-      if (companySettings.transferencia.cedula)
-        paymentData.push(`Cédula/RIF: ${companySettings.transferencia.cedula}`);
+      if (companySettings.transferencia.banco) paymentData.push(`Banco: ${companySettings.transferencia.banco}`)
+      if (companySettings.transferencia.cedula) paymentData.push(`Cédula/RIF: ${companySettings.transferencia.cedula}`)
       if (companySettings.transferencia.numeroCuenta)
-        paymentData.push(`Número de Cuenta: ${companySettings.transferencia.numeroCuenta}`);
+        paymentData.push(`Número de Cuenta: ${companySettings.transferencia.numeroCuenta}`)
       if (companySettings.transferencia.telefono)
-        paymentData.push(`Teléfono: ${companySettings.transferencia.telefono}`);
+        paymentData.push(`Teléfono: ${companySettings.transferencia.telefono}`)
     }
-    paymentData.push(`Monto a Pagar (Bs.): ${montoBs.toFixed(2)}`);
+    paymentData.push(`Monto a Pagar (Bs.): ${montoBs.toFixed(2)}`)
+    paymentData.push(`Monto a Pagar (USD): ${ticket.montoCalculado.toFixed(2)}`)
 
-    const textToCopy = paymentData.join("\n");
-    copyToClipboard(textToCopy, true);
-  };
+    const textToCopy = paymentData.join("\n")
+    copyToClipboard(textToCopy, true)
+  }
 
   if (success) {
     return (
@@ -531,7 +544,7 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
             </div>
             <p className="text-center text-sm text-muted-foreground">Paso {currentStep} de 4</p>
           </div>
-          
+
           {error && (
             <Alert className="mb-4" variant="destructive">
               <AlertCircle className="h-4 w-4" />
@@ -539,11 +552,11 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
             </Alert>
           )}
           {copySuccess && (
-              <Alert className="mb-4" variant="success">
-                <CheckCircle2 className="h-4 w-4 text-green-500" />
-                <AlertDescription>{copySuccess}</AlertDescription>
-              </Alert>
-            )}
+            <Alert className="mb-4" variant="success">
+              <CheckCircle2 className="h-4 w-4 text-green-500" />
+              <AlertDescription>{copySuccess}</AlertDescription>
+            </Alert>
+          )}
           {/* PASO 1: Selección de método de pago */}
           {currentStep === 1 && (
             <div className="space-y-6">
@@ -665,224 +678,254 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
           )}
 
           {/* PASO 2: Información bancaria de la empresa (solo para pagos electrónicos) */}
-{currentStep === 2 && (
-  <div className="space-y-6">
-    <div className="text-center">
-      <h2 className="text-xl font-bold mb-4">Información de Pago</h2>
-      <div className="space-y-4">
-        <div>
-          <p className="text-sm text-muted-foreground">Código de Ticket</p>
-          <p className="text-lg font-medium">{ticket.codigoTicket}</p>
-        </div>
-        <div>
-          <p className="text-sm text-muted-foreground">Monto a Pagar</p>
-          <div className="text-center p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800/30">
-            <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-              {formatCurrency(montoBs, "VES")}
-            </p>
-            <p className="text-lg font-medium text-green-500 dark:text-green-300">
-              {formatCurrency(ticket.montoCalculado)}
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-    {!isLoaded ? (
-      <div className="flex justify-center py-4">
-        <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
-    ) : (
-      <div className="space-y-4 bg-muted/50 p-4 rounded-lg border">
-        <div className="flex justify-between items-center">
-          <h3 className="font-semibold text-center">Datos para realizar el pago</h3>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={copyAllData}
-            className="ml-2 h-8 text-sm"
-          >
-            <Copy className="h-4 w-4 mr-1" /> Copiar Todo
-          </Button>
-        </div>
-        {companySettings && paymentType && (
-          <>
-            {/* Sección de Pago Móvil */}
-{paymentType === "pago_movil" &&
-  (companySettings.pagoMovil.banco ||
-    companySettings.pagoMovil.cedula ||
-    companySettings.pagoMovil.telefono) && (
-    <div className="space-y-2">
-      <h4 className="font-medium text-sm text-foreground">Pago Móvil</h4>
-      {companySettings.pagoMovil.banco && (
-        <div className="flex justify-between items-center">
-          <span className="text-sm text-muted-foreground">Banco:</span>
-          <div className="flex items-center">
-            <span className="text-sm font-medium">{companySettings.pagoMovil.banco}</span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => copyToClipboard(companySettings.pagoMovil.banco || "")}
-              className="ml-2 p-0 h-6 w-6 border border-border dark:border-border-dark"
-              data-icon="copy"
-            >
-              <Copy className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      )}
-      {companySettings.pagoMovil.cedula && (
-        <div className="flex justify-between items-center">
-          <span className="text-sm text-muted-foreground">Cédula/RIF:</span>
-          <div className="flex items-center">
-            <span className="text-sm font-medium">{companySettings.pagoMovil.cedula}</span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => copyToClipboard(companySettings.pagoMovil.cedula || "")}
-              className="ml-2 p-0 h-6 w-6 border border-border dark:border-border-dark"
-              data-icon="copy"
-            >
-              <Copy className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      )}
-      {companySettings.pagoMovil.telefono && (
-        <div className="flex justify-between items-center">
-          <span className="text-sm text-muted-foreground">Teléfono:</span>
-          <div className="flex items-center">
-            <span className="text-sm font-medium">{companySettings.pagoMovil.telefono}</span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => copyToClipboard(companySettings.pagoMovil.telefono || "")}
-              className="ml-2 p-0 h-6 w-6 border border-border dark:border-border-dark"
-              data-icon="copy"
-            >
-              <Copy className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      )}
-    </div>
-  )}
-            {/* Sección de Transferencia */}
-            {paymentType === "transferencia" &&
-              (companySettings.transferencia.banco ||
-                companySettings.transferencia.cedula ||
-                companySettings.transferencia.telefono ||
-                companySettings.transferencia.numeroCuenta) && (
-                <div className="space-y-2">
-                  <h4 className="font-medium text-sm text-foreground">Transferencia Bancaria</h4>
-                  {companySettings.transferencia.banco && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">Banco:</span>
-                      <div className="flex items-center">
-                        <span className="text-sm font-medium">{companySettings.transferencia.banco}</span>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => copyToClipboard(companySettings.transferencia.banco || "")}
-                          className="ml-2 p-0 h-6 w-6 border border-border dark:border-border-dark"
-                        >
-                          <Copy className="h-4 w-4 text-foreground dark:text-foreground-dark" />
-                        </Button>
-                      </div>
+          {currentStep === 2 && (
+            <div className="space-y-6">
+              <div className="text-center">
+                <h2 className="text-xl font-bold mb-4">Información de Pago</h2>
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Código de Ticket</p>
+                    <p className="text-lg font-medium">{ticket.codigoTicket}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Monto a Pagar</p>
+                    <div className="text-center p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800/30">
+                      <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                        {formatCurrency(montoBs, "VES")}
+                      </p>
+                      <p className="text-lg font-medium text-green-500 dark:text-green-300">
+                        {formatCurrency(ticket.montoCalculado)}
+                      </p>
                     </div>
-                  )}
-                  {companySettings.transferencia.cedula && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">Cédula/RIF:</span>
-                      <div className="flex items-center">
-                        <span className="text-sm font-medium">{companySettings.transferencia.cedula}</span>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => copyToClipboard(companySettings.transferencia.cedula || "")}
-                          className="ml-2 p-0 h-6 w-6 border border-border dark:border-border-dark"
-                        >
-                          <Copy className="h-4 w-4 text-foreground dark:text-foreground-dark" />
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                  {companySettings.transferencia.numeroCuenta && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">Número de Cuenta:</span>
-                      <div className="flex items-center">
-                        <span className="text-sm font-medium">{companySettings.transferencia.numeroCuenta}</span>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => copyToClipboard(companySettings.transferencia.numeroCuenta || "")}
-                          className="ml-2 p-0 h-6 w-6 border border-border dark:border-border-dark"
-                        >
-                          <Copy className="h-4 w-4 text-foreground dark:text-foreground-dark" />
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                  {companySettings.transferencia.telefono && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">Teléfono:</span>
-                      <div className="flex items-center">
-                        <span className="text-sm font-medium">{companySettings.transferencia.telefono}</span>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => copyToClipboard(companySettings.transferencia.telefono || "")}
-                          className="ml-2 p-0 h-6 w-6 border border-border dark:border-border-dark"
-                        >
-                          <Copy className="h-4 w-4 text-foreground dark:text-foreground-dark" />
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            {/* Sección de Monto a Pagar */}
-              <div className="space-y-2">
-                <h4 className="font-medium text-sm text-foreground">Monto a Pagar</h4>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Monto (Bs.):</span>
-                  <div className="flex items-center">
-                    <span className="text-sm font-medium">{formatCurrency(montoBs, "VES")}</span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => copyToClipboard(montoBs.toFixed(2))}
-                      className="ml-2 p-0 h-6 w-6 border border-border dark:border-border-dark"
-                    >
-                      <Copy className="h-4 w-4" />
-                    </Button>
                   </div>
                 </div>
               </div>
-            {!companySettings.pagoMovil.banco && !companySettings.transferencia.banco && (
-              <div className="text-center text-muted-foreground py-2">
-                <p>No hay información de pago configurada</p>
+              {!isLoaded ? (
+                <div className="flex justify-center py-4">
+                  <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : (
+                <div className="space-y-4 bg-muted/50 p-4 rounded-lg border">
+                  <div className="flex flex-col xs:flex-row xs:justify-between xs:items-center gap-2">
+                    <h3 className="font-semibold text-center xs:text-left">Datos para realizar el pago</h3>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={copyAllData}
+                      className="h-8 text-sm self-center xs:self-auto bg-transparent"
+                    >
+                      <Copy className="h-4 w-4 mr-1" /> Copiar Todo
+                    </Button>
+                  </div>
+                  {companySettings && paymentType && (
+                    <>
+                      {/* Sección de Pago Móvil */}
+                      {paymentType === "pago_movil" &&
+                        (companySettings.pagoMovil.banco ||
+                          companySettings.pagoMovil.cedula ||
+                          companySettings.pagoMovil.telefono) && (
+                          <div className="space-y-2">
+                            <h4 className="font-medium text-sm text-foreground">Pago Móvil</h4>
+                            {companySettings.pagoMovil.banco && (
+                              <div className="flex justify-between items-center gap-2">
+                                <span className="text-sm text-muted-foreground flex-shrink-0">Banco:</span>
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <span className="text-sm font-medium truncate">
+                                    {companySettings.pagoMovil.banco}
+                                  </span>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => copyToClipboard(companySettings.pagoMovil.banco || "")}
+                                    className="p-0 h-6 w-6 border border-border dark:border-border-dark flex-shrink-0"
+                                    data-icon="copy"
+                                  >
+                                    <Copy className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              </div>
+                            )}
+                            {companySettings.pagoMovil.cedula && (
+                              <div className="flex justify-between items-center gap-2">
+                                <span className="text-sm text-muted-foreground flex-shrink-0">Cédula/RIF:</span>
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <span className="text-sm font-medium truncate">
+                                    {companySettings.pagoMovil.cedula}
+                                  </span>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => copyToClipboard(companySettings.pagoMovil.cedula || "")}
+                                    className="p-0 h-6 w-6 border border-border dark:border-border-dark flex-shrink-0"
+                                    data-icon="copy"
+                                  >
+                                    <Copy className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              </div>
+                            )}
+                            {companySettings.pagoMovil.telefono && (
+                              <div className="flex justify-between items-center gap-2">
+                                <span className="text-sm text-muted-foreground flex-shrink-0">Teléfono:</span>
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <span className="text-sm font-medium truncate">
+                                    {companySettings.pagoMovil.telefono}
+                                  </span>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => copyToClipboard(companySettings.pagoMovil.telefono || "")}
+                                    className="p-0 h-6 w-6 border border-border dark:border-border-dark flex-shrink-0"
+                                    data-icon="copy"
+                                  >
+                                    <Copy className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      {/* Sección de Transferencia */}
+                      {paymentType === "transferencia" &&
+                        (companySettings.transferencia.banco ||
+                          companySettings.transferencia.cedula ||
+                          companySettings.transferencia.telefono ||
+                          companySettings.transferencia.numeroCuenta) && (
+                          <div className="space-y-2">
+                            <h4 className="font-medium text-sm text-foreground">Transferencia Bancaria</h4>
+                            {companySettings.transferencia.banco && (
+                              <div className="flex justify-between items-center gap-2">
+                                <span className="text-sm text-muted-foreground flex-shrink-0">Banco:</span>
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <span className="text-sm font-medium truncate">
+                                    {companySettings.transferencia.banco}
+                                  </span>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => copyToClipboard(companySettings.transferencia.banco || "")}
+                                    className="p-0 h-6 w-6 border border-border dark:border-border-dark flex-shrink-0"
+                                  >
+                                    <Copy className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              </div>
+                            )}
+                            {companySettings.transferencia.cedula && (
+                              <div className="flex justify-between items-center gap-2">
+                                <span className="text-sm text-muted-foreground flex-shrink-0">Cédula/RIF:</span>
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <span className="text-sm font-medium truncate">
+                                    {companySettings.transferencia.cedula}
+                                  </span>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => copyToClipboard(companySettings.transferencia.cedula || "")}
+                                    className="p-0 h-6 w-6 border border-border dark:border-border-dark flex-shrink-0"
+                                  >
+                                    <Copy className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              </div>
+                            )}
+                            {companySettings.transferencia.numeroCuenta && (
+                              <div className="flex justify-between items-center gap-2">
+                                <span className="text-sm text-muted-foreground flex-shrink-0">Número de Cuenta:</span>
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <span className="text-sm font-medium truncate">
+                                    {companySettings.transferencia.numeroCuenta}
+                                  </span>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => copyToClipboard(companySettings.transferencia.numeroCuenta || "")}
+                                    className="p-0 h-6 w-6 border border-border dark:border-border-dark flex-shrink-0"
+                                  >
+                                    <Copy className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              </div>
+                            )}
+                            {companySettings.transferencia.telefono && (
+                              <div className="flex justify-between items-center gap-2">
+                                <span className="text-sm text-muted-foreground flex-shrink-0">Teléfono:</span>
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <span className="text-sm font-medium truncate">
+                                    {companySettings.transferencia.telefono}
+                                  </span>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => copyToClipboard(companySettings.transferencia.telefono || "")}
+                                    className="p-0 h-6 w-6 border border-border dark:border-border-dark flex-shrink-0"
+                                  >
+                                    <Copy className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      {/* Sección de Monto a Pagar */}
+                      <div className="space-y-2">
+                        <h4 className="font-medium text-sm text-foreground">Monto a Pagar</h4>
+                        <div className="flex justify-between items-center gap-2">
+                          <span className="text-sm text-muted-foreground flex-shrink-0">Monto (Bs.):</span>
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="text-sm font-medium truncate">{formatCurrency(montoBs, "VES")}</span>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => copyToClipboard(montoBs.toFixed(2))}
+                              className="p-0 h-6 w-6 border border-border dark:border-border-dark flex-shrink-0"
+                            >
+                              <Copy className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="flex justify-between items-center gap-2">
+                          <span className="text-sm text-muted-foreground flex-shrink-0">Monto (USD):</span>
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="text-sm font-medium truncate">
+                              {formatCurrency(ticket.montoCalculado)}
+                            </span>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => copyToClipboard(ticket.montoCalculado.toFixed(2))}
+                              className="p-0 h-6 w-6 border border-border dark:border-border-dark flex-shrink-0"
+                            >
+                              <Copy className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                      {!companySettings.pagoMovil.banco && !companySettings.transferencia.banco && (
+                        <div className="text-center text-muted-foreground py-2">
+                          <p>No hay información de pago configurada</p>
+                        </div>
+                      )}
+                    </>
+                  )}
+                  <div className="text-sm text-muted-foreground text-center pt-2">
+                    <p>
+                      Realice su pago utilizando los datos bancarios proporcionados y luego registre los detalles de su
+                      transferencia.
+                    </p>
+                  </div>
+                </div>
+              )}
+              <div className="flex gap-4 pt-4">
+                <Button onClick={prevStep} variant="outline" className="flex-1 h-12 text-lg bg-transparent">
+                  <ArrowLeft className="mr-2 h-5 w-5" /> Anterior
+                </Button>
+                <Button onClick={nextStep} className="flex-1 h-12 text-lg">
+                  Continuar <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
               </div>
-            )}
-          </>
-        )}
-        <div className="text-sm text-muted-foreground text-center pt-2">
-          <p>
-            Realice su pago utilizando los datos bancarios proporcionados y luego registre los detalles de su
-            transferencia.
-          </p>
-        </div>
-      </div>
-    )}
-    <div className="flex gap-4 pt-4">
-      <Button onClick={prevStep} variant="outline" className="flex-1 h-12 text-lg">
-        <ArrowLeft className="mr-2 h-5 w-5" /> Anterior
-      </Button>
-      <Button onClick={nextStep} className="flex-1 h-12 text-lg">
-        Continuar <ArrowRight className="ml-2 h-5 w-5" />
-      </Button>
-    </div>
-  </div>
-)}
+            </div>
+          )}
 
           {/* PASO 3: Formulario de detalles de transferencia */}
           {currentStep === 3 && (
@@ -1142,7 +1185,7 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
               </div>
 
               <div className="flex gap-4 pt-4">
-                <Button onClick={prevStep} variant="outline" className="flex-1 h-12 text-lg">
+                <Button onClick={prevStep} variant="outline" className="flex-1 h-12 text-lg bg-transparent">
                   <ArrowLeft className="mr-2 h-5 w-5" /> Anterior
                 </Button>
                 <Button onClick={nextStep} className="flex-1 h-12 text-lg" disabled={!isFormValid()}>
@@ -1272,7 +1315,7 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                   </div>
 
                   <div className="flex flex-col gap-3 pt-4">
-                    <Button onClick={prevStep} variant="outline" className="w-full h-12 text-lg">
+                    <Button onClick={prevStep} variant="outline" className="w-full h-12 text-lg bg-transparent">
                       <ArrowLeft className="mr-2 h-5 w-5" /> Corregir Datos
                     </Button>
                     <Button
@@ -1291,7 +1334,7 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
       </Card>
 
       {/* Dialog para prompt de notificaciones */}
-{/*       <Dialog open={showNotificationPrompt} onOpenChange={setShowNotificationPrompt}>
+       <Dialog open={showNotificationPrompt} onOpenChange={setShowNotificationPrompt}>
         <DialogContent className="sm:max-w-md bg-background border-border p-4 shadow-2xl">
           <DialogHeader>
             <DialogTitle>Activar Notificaciones</DialogTitle>
@@ -1309,7 +1352,7 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
             isLoading={isLoading}
           />
         </DialogContent>
-      </Dialog> */}
+      </Dialog> 
     </div>
   )
 }

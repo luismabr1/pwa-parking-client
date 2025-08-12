@@ -123,7 +123,7 @@ export interface CarHistory {
   }
 }
 
-// Nuevas interfaces para el sistema de logging de seguridad
+// Interfaces para el sistema de logging de seguridad
 export interface SecurityLog {
   _id?: string
   timestamp: Date
@@ -191,4 +191,52 @@ export interface SecurityStats {
   }>
   createdAt: Date
   updatedAt: Date
+}
+
+// Interfaz para asociaciones ticket-suscripción
+export interface TicketSubscription {
+  _id?: string
+  ticketCode: string
+  subscriptionId: string // ID de la suscripción en push_subscriptions
+  endpoint: string // Endpoint de la suscripción push para verificación
+  createdAt: Date
+  updatedAt?: Date
+  isActive: boolean
+  notificationsSent: number
+  lastNotificationAt?: Date | null
+}
+
+// Interfaz para suscripciones push (mejorada)
+export interface PushSubscription {
+  _id?: string
+  endpoint: string
+  keys: {
+    p256dh: string
+    auth: string
+  }
+  userType: "user" | "admin"
+  ticketCode?: string | null // Para compatibilidad con versiones anteriores
+  ticketCodes?: string[] // Array de tickets asociados
+  createdAt: Date
+  updatedAt?: Date
+  lastUsed?: Date
+  isActive: boolean
+
+  // Información adicional del dispositivo/sesión
+  deviceInfo?: {
+    userAgent?: string
+    timestamp?: Date
+    ip?: string
+  }
+
+  // Gestión del ciclo de vida
+  lifecycle?: {
+    stage: "active" | "inactive" | "expired"
+    createdAt: Date
+    updatedAt: Date
+  }
+
+  // Configuración de expiración
+  autoExpire?: boolean
+  expiresAt?: Date | null
 }
