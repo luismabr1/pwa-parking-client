@@ -31,6 +31,9 @@ import type { Ticket, PaymentFormData, CompanySettings } from "@/lib/types"
 import { useTicketNotifications } from "@/hooks/use-ticket-notification"
 import NotificationPrompt from "@/components/notifications/notification-prompt"
 
+// Verificar si las notificaciones están habilitadas via variable de entorno
+const NOTIFICATIONS_ENABLED = process.env.NEXT_PUBLIC_ENABLE_NOTIFICATIONS === "true"
+
 // Updated interface to include montoBs and tasaCambio
 interface TicketWithBs extends Ticket {
   montoBs?: number
@@ -172,13 +175,34 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
     message: "",
   })
 
-  // Hook para notificaciones del ticket
+  const [notificationsData, setNotificationsData] = useState({
+    isSupported: false,
+    isSubscribed: false,
+    isRegistered: false,
+    enableNotificationsForTicket: () => Promise.resolve(),
+  })
+
   const {
     isSupported: notificationsSupported,
     isSubscribed: notificationsEnabled,
     isRegistered: ticketNotificationsRegistered,
     enableNotificationsForTicket,
-  } = useTicketNotifications(ticket.codigoTicket)
+  } = notificationsData
+
+  useEffect(() => {
+    if (NOTIFICATIONS_ENABLED) {
+      const { isSupported, isSubscribed, isRegistered, enableNotificationsForTicket } = useTicketNotifications(
+        ticket.codigoTicket,
+      )
+
+      setNotificationsData({
+        isSupported,
+        isSubscribed,
+        isRegistered,
+        enableNotificationsForTicket,
+      })
+    }
+  }, [ticket.codigoTicket])
 
   // Calculate montoBs using ticket.tasaCambio, fallback to companySettings if unavailable
   const tasaCambio = ticket.tasaCambio || companySettings?.tarifas?.tasaCambio || 1
@@ -353,13 +377,23 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
 
   // Función para mostrar prompt de notificaciones antes del pago
   const checkNotificationsBeforePayment = () => {
-    // Solo mostrar si las notificaciones son soportadas y no están activadas para este ticket
+    // Si las notificaciones están deshabilitadas, proceder directamente al pago
+    if (!NOTIFICATIONS_ENABLED) {
+      console.log("🔕 [NOTIFICATIONS] Notificaciones deshabilitadas por variable de entorno")
+      handleSubmit()
+      return
+    }
+
+    // Solo mostrar si las notificaciones están habilitadas en el entorno
+    // y son soportadas y no están activadas para este ticket
     if (notificationsSupported && !ticketNotificationsRegistered && !notificationsEnabled) {
+      console.log("🔔 [NOTIFICATIONS] Mostrando prompt de notificaciones")
       setShowNotificationPrompt(true)
       return
     }
 
     // Si ya están activadas, proceder directamente
+    console.log("🔔 [NOTIFICATIONS] Notificaciones ya activadas, procediendo al pago")
     handleSubmit()
   }
 
@@ -471,7 +505,8 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
         paymentData.push(`Teléfono: ${companySettings.transferencia.telefono}`)
     }
     paymentData.push(`Monto a Pagar (Bs.): ${montoBs.toFixed(2)}`)
-    paymentData.push(`Monto a Pagar (USD): ${ticket.montoCalculado.toFixed(2)}`)
+    // Remover esta línea:
+    // paymentData.push(`Monto a Pagar (USD): ${ticket.montoCalculado.toFixed(2)}`)
 
     const textToCopy = paymentData.join("\n")
     copyToClipboard(textToCopy, true)
@@ -490,8 +525,8 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                 : "El pago ha sido registrado y está Pendiente de Validación por el personal del estacionamiento."}
             </p>
 
-            {/* Mostrar estado de notificaciones */}
-            {ticketNotificationsRegistered && (
+            {/* Mostrar estado de notificaciones solo si están habilitadas */}
+            {NOTIFICATIONS_ENABLED && ticketNotificationsRegistered && (
               <div className="bg-green-50 dark:bg-green-950/20 p-4 rounded-lg mb-4 border border-green-200 dark:border-green-800/30">
                 <div className="flex items-center justify-center space-x-2 text-green-800 dark:text-green-200">
                   <Bell className="h-5 w-5" />
@@ -886,19 +921,9 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                         </div>
                         <div className="flex justify-between items-center gap-2">
                           <span className="text-sm text-muted-foreground flex-shrink-0">Monto (USD):</span>
-                          <div className="flex items-center gap-2 min-w-0">
-                            <span className="text-sm font-medium truncate">
-                              {formatCurrency(ticket.montoCalculado)}
-                            </span>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => copyToClipboard(ticket.montoCalculado.toFixed(2))}
-                              className="p-0 h-6 w-6 border border-border dark:border-border-dark flex-shrink-0"
-                            >
-                              <Copy className="h-3 w-3" />
-                            </Button>
-                          </div>
+                          <span className="text-sm font-medium text-muted-foreground">
+                            {formatCurrency(ticket.montoCalculado)}
+                          </span>
                         </div>
                       </div>
                       {!companySettings.pagoMovil.banco && !companySettings.transferencia.banco && (
@@ -933,29 +958,6 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
               <h2 className="text-xl font-bold mb-4 text-center">Detalles de Transferencia</h2>
 
               <div className="space-y-4">
-                {/* Selector de tiempo de salida */}
-                <div className="space-y-2">
-                  <Label htmlFor="tiempoSalida" className="text-sm font-medium flex items-center">
-                    <Clock className="h-4 w-4 mr-2" />
-                    ¿Cuándo planea salir?
-                  </Label>
-                  <Select value={formData.tiempoSalida} onValueChange={handleExitTimeChange}>
-                    <SelectTrigger id="tiempoSalida" className="h-12 text-lg">
-                      <SelectValue placeholder="Seleccione tiempo de salida" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {exitTimeOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">
-                    Esta información ayudará al personal a gestionar mejor los espacios
-                  </p>
-                </div>
-
                 <div>
                   <p className="text-sm text-muted-foreground">Monto a Pagar</p>
                   <div className="text-center p-4 bg-green-50 dark:bg-green-950/20 rounded-lg mb-4 border border-green-200 dark:border-green-800/30">
@@ -1182,6 +1184,31 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                     </p>
                   </div>
                 </div>
+
+                {/* Selector de tiempo de salida */}
+                <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800/30">
+                  <div className="space-y-2">
+                    <Label htmlFor="tiempoSalida" className="text-sm font-medium flex items-center">
+                      <Clock className="h-4 w-4 mr-2" />
+                      ¿Cuándo planea salir?
+                    </Label>
+                    <Select value={formData.tiempoSalida} onValueChange={handleExitTimeChange}>
+                      <SelectTrigger id="tiempoSalida" className="h-12 text-lg">
+                        <SelectValue placeholder="Seleccione tiempo de salida" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {exitTimeOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      Esta información ayudará al personal a gestionar mejor los espacios y preparar su vehículo
+                    </p>
+                  </div>
+                </div>
               </div>
 
               <div className="flex gap-4 pt-4">
@@ -1333,26 +1360,28 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
         </CardContent>
       </Card>
 
-      {/* Dialog para prompt de notificaciones */}
-       <Dialog open={showNotificationPrompt} onOpenChange={setShowNotificationPrompt}>
-        <DialogContent className="sm:max-w-md bg-background border-border p-4 shadow-2xl">
-          <DialogHeader>
-            <DialogTitle>Activar Notificaciones</DialogTitle>
-            <DialogDescription>
-              ¿Te gustaría recibir notificaciones sobre el estado de tu pago para el ticket {ticket.codigoTicket}?
-            </DialogDescription>
-          </DialogHeader>
-          <NotificationPrompt
-            ticketCode={ticket.codigoTicket}
-            onEnable={enableNotificationsForTicket}
-            onSkip={() => {
-              setShowNotificationPrompt(false)
-              handleSubmit()
-            }}
-            isLoading={isLoading}
-          />
-        </DialogContent>
-      </Dialog> 
+      {/* Dialog para prompt de notificaciones - solo si están habilitadas */}
+      {NOTIFICATIONS_ENABLED && (
+        <Dialog open={showNotificationPrompt} onOpenChange={setShowNotificationPrompt}>
+          <DialogContent className="sm:max-w-md bg-background border-border p-4 shadow-2xl">
+            <DialogHeader>
+              <DialogTitle>Activar Notificaciones</DialogTitle>
+              <DialogDescription>
+                ¿Te gustaría recibir notificaciones sobre el estado de tu pago para el ticket {ticket.codigoTicket}?
+              </DialogDescription>
+            </DialogHeader>
+            <NotificationPrompt
+              ticketCode={ticket.codigoTicket}
+              onEnable={enableNotificationsForTicket}
+              onSkip={() => {
+                setShowNotificationPrompt(false)
+                handleSubmit()
+              }}
+              isLoading={isLoading}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   )
 }
