@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { X, Download, Smartphone } from "lucide-react"
+import { Download, Smartphone } from "lucide-react"
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>
@@ -119,7 +119,11 @@ export default function PWAInstallPrompt() {
 
   console.log("PWAInstallPrompt: Rendering banner.")
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border shadow-lg">
+    <div
+      className={`fixed bottom-0 left-0 right-0 z-50 border-t border-border shadow-lg ${
+        isIOS ? "bg-background/80 backdrop-blur-md" : "bg-background"
+      }`}
+    >
       <div className="max-w-md mx-auto p-4">
         <div className="flex items-center gap-3">
           <div className="flex-shrink-0 w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
