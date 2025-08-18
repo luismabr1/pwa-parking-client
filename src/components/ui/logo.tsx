@@ -33,7 +33,7 @@ export default function Logo({ size = 40, className = "", showText = false, vari
   // Para diferentes variantes, usar tamaños específicos
   const logoSize = variant === "favicon" ? 32 : variant === "hero" ? 64 : size
 
-  // Clases base para el contenedor
+  // Clases base para el contenedor - AGREGANDO CONTENEDOR REDONDO
   const containerClasses = cn(
     "flex items-center gap-2",
     variant === "favicon" && "w-8 h-8",
@@ -41,59 +41,71 @@ export default function Logo({ size = 40, className = "", showText = false, vari
     className,
   )
 
-  // Clases para la imagen/icono
+  // Clases para la imagen/icono - AGREGANDO CONTENEDOR REDONDO
   const imageClasses = cn(
-    "rounded-lg object-cover",
-    variant === "favicon" && "rounded-md",
-    variant === "icon" && "shadow-sm",
-    variant === "hero" && "shadow-lg",
+    "object-cover",
+    variant === "favicon" && "rounded-full",
+    variant === "icon" && "rounded-full shadow-sm",
+    variant === "hero" && "rounded-full shadow-lg",
+    variant === "full" && "rounded-full shadow-md",
   )
 
   return (
     <div className={containerClasses}>
-      {!imageError && logoSrc.startsWith("data:") ? (
-        // Logo SVG generado
-        <div
-          className={cn(imageClasses, "flex items-center justify-center bg-primary text-primary-foreground font-bold")}
-          style={{
-            width: logoSize,
-            height: logoSize,
-            fontSize: logoSize * 0.4,
-          }}
-          dangerouslySetInnerHTML={{
-            __html: logoSrc
-              .replace("data:image/svg+xml,", "")
-              .replace(/%3C/g, "<")
-              .replace(/%3E/g, ">")
-              .replace(/%20/g, " ")
-              .replace(/%25/g, "%")
-              .replace(/%23/g, "#"),
-          }}
-        />
-      ) : !imageError ? (
-        // Logo personalizado
-        <Image
-          src={logoSrc || "/placeholder.svg"}
-          alt={APP_CONFIG.logo.alt}
-          width={logoSize}
-          height={logoSize}
-          className={imageClasses}
-          onError={() => setImageError(true)}
-          priority={variant === "favicon"}
-        />
-      ) : (
-        // Fallback si hay error
-        <div
-          className={cn(imageClasses, "flex items-center justify-center bg-primary text-primary-foreground font-bold")}
-          style={{
-            width: logoSize,
-            height: logoSize,
-            fontSize: logoSize * 0.4,
-          }}
-        >
-          {APP_CONFIG.logo.fallbackText}
-        </div>
-      )}
+      {/* Contenedor redondo para el logo */}
+      <div
+        className={cn(
+          "rounded-full overflow-hidden bg-background border-2 border-border flex items-center justify-center",
+          variant === "favicon" && "w-8 h-8",
+          variant === "icon" && `w-10 h-10`,
+          variant === "hero" && "w-16 h-16",
+          variant === "full" && "w-12 h-12",
+        )}
+        style={variant === "icon" && size !== 40 ? { width: size, height: size } : undefined}
+      >
+        {!imageError && logoSrc.startsWith("data:") ? (
+          // Logo SVG generado
+          <div
+            className={cn(
+              imageClasses,
+              "flex items-center justify-center bg-primary text-primary-foreground font-bold w-full h-full",
+            )}
+            dangerouslySetInnerHTML={{
+              __html: logoSrc
+                .replace("data:image/svg+xml,", "")
+                .replace(/%3C/g, "<")
+                .replace(/%3E/g, ">")
+                .replace(/%20/g, " ")
+                .replace(/%25/g, "%")
+                .replace(/%23/g, "#"),
+            }}
+          />
+        ) : !imageError ? (
+          // Logo personalizado
+          <Image
+            src={logoSrc || "/placeholder.svg"}
+            alt={APP_CONFIG.logo.alt}
+            width={logoSize}
+            height={logoSize}
+            className={cn(imageClasses, "w-full h-full")}
+            onError={() => setImageError(true)}
+            priority={variant === "favicon"}
+          />
+        ) : (
+          // Fallback si hay error
+          <div
+            className={cn(
+              imageClasses,
+              "flex items-center justify-center bg-primary text-primary-foreground font-bold w-full h-full",
+            )}
+            style={{
+              fontSize: logoSize * 0.4,
+            }}
+          >
+            {APP_CONFIG.logo.fallbackText}
+          </div>
+        )}
+      </div>
 
       {showText && (
         <div className="flex flex-col">

@@ -3,16 +3,19 @@ export const APP_CONFIG = {
   // Logo configuration
   logo: {
     // Logo para tema claro
-    light: "https://res.cloudinary.com/dezs0sktt/image/upload/v1752610317/parking-plates/z9euot4qapf5yi556wka.png",
+    light:
+      "https://res.cloudinary.com/dezs0sktt/image/upload/v1755478227/Imagen_de_WhatsApp_2025-08-12_a_las_18.20.07_269fbbed_fd0ygy.jpg",
 
     // Logo para tema oscuro (puedes cambiar por una versión para fondo oscuro)
-    dark: "https://res.cloudinary.com/dezs0sktt/image/upload/v1754755309/Imagen1_afpkdj.png",
+    dark: "https://res.cloudinary.com/dezs0sktt/image/upload/v1755478227/Imagen_de_WhatsApp_2025-08-12_a_las_18.20.07_269fbbed_fd0ygy.jpg",
 
     // Logo para splash screen (pantalla de inicio PWA) - recomendado 512x512
-    splash: "https://res.cloudinary.com/dezs0sktt/image/upload/v1752610317/parking-plates/z9euot4qapf5yi556wka.png",
+    splash:
+      "https://res.cloudinary.com/dezs0sktt/image/upload/v1755478227/Imagen_de_WhatsApp_2025-08-12_a_las_18.20.07_269fbbed_fd0ygy.jpg",
 
     // Favicon para pestaña del navegador - recomendado 32x32 o 16x16
-    favicon: "https://res.cloudinary.com/dezs0sktt/image/upload/v1752610317/parking-plates/z9euot4qapf5yi556wka.png",
+    favicon:
+      "https://res.cloudinary.com/dezs0sktt/image/upload/v1755478227/Imagen_de_WhatsApp_2025-08-12_a_las_18.20.07_269fbbed_fd0ygy.jpg",
 
     // Configuración adicional
     alt: "Parking PWA Logo",

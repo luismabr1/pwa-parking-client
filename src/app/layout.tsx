@@ -60,16 +60,20 @@ export const metadata: Metadata = {
     title: APP_CONFIG.app.shortName,
     startupImage: [
       {
-        url: splashLogoSrc,
+        url: "https://res.cloudinary.com/dezs0sktt/image/upload/v1755478227/Imagen_de_WhatsApp_2025-08-12_a_las_18.20.07_269fbbed_fd0ygy.jpg",
         media: "(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)",
       },
       {
-        url: splashLogoSrc,
+        url: "https://res.cloudinary.com/dezs0sktt/image/upload/v1755478227/Imagen_de_WhatsApp_2025-08-12_a_las_18.20.07_269fbbed_fd0ygy.jpg",
         media: "(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2)",
       },
       {
-        url: splashLogoSrc,
+        url: "https://res.cloudinary.com/dezs0sktt/image/upload/v1755478227/Imagen_de_WhatsApp_2025-08-12_a_las_18.20.07_269fbbed_fd0ygy.jpg",
         media: "(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)",
+      },
+      {
+        url: "https://res.cloudinary.com/dezs0sktt/image/upload/v1755478227/Imagen_de_WhatsApp_2025-08-12_a_las_18.20.07_269fbbed_fd0ygy.jpg",
+        media: "(min-device-width: 768px) and (max-device-width: 1024px)",
       },
     ],
   },
@@ -92,30 +96,82 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       {
-        url: faviconSrc,
+        url: "https://res.cloudinary.com/dezs0sktt/image/upload/v1755478227/Imagen_de_WhatsApp_2025-08-12_a_las_18.20.07_269fbbed_fd0ygy.jpg",
         sizes: "32x32",
-        type: faviconSrc.startsWith("data:") ? "image/svg+xml" : "image/png",
+        type: "image/png",
       },
       {
-        url: faviconSrc,
+        url: "https://res.cloudinary.com/dezs0sktt/image/upload/v1755478227/Imagen_de_WhatsApp_2025-08-12_a_las_18.20.07_269fbbed_fd0ygy.jpg",
         sizes: "16x16",
-        type: faviconSrc.startsWith("data:") ? "image/svg+xml" : "image/png",
+        type: "image/png",
+      },
+      {
+        url: "https://res.cloudinary.com/dezs0sktt/image/upload/v1755478227/Imagen_de_WhatsApp_2025-08-12_a_las_18.20.07_269fbbed_fd0ygy.jpg",
+        sizes: "192x192",
+        type: "image/png",
+      },
+      {
+        url: "https://res.cloudinary.com/dezs0sktt/image/upload/v1755478227/Imagen_de_WhatsApp_2025-08-12_a_las_18.20.07_269fbbed_fd0ygy.jpg",
+        sizes: "512x512",
+        type: "image/png",
       },
     ],
     apple: [
       {
-        url: splashLogoSrc,
+        url: "https://res.cloudinary.com/dezs0sktt/image/upload/v1755478227/Imagen_de_WhatsApp_2025-08-12_a_las_18.20.07_269fbbed_fd0ygy.jpg",
         sizes: "180x180",
-        type: splashLogoSrc.startsWith("data:") ? "image/svg+xml" : "image/png",
+        type: "image/png",
+      },
+      {
+        url: "https://res.cloudinary.com/dezs0sktt/image/upload/v1755478227/Imagen_de_WhatsApp_2025-08-12_a_las_18.20.07_269fbbed_fd0ygy.jpg",
+        sizes: "152x152",
+        type: "image/png",
+      },
+      {
+        url: "https://res.cloudinary.com/dezs0sktt/image/upload/v1755478227/Imagen_de_WhatsApp_2025-08-12_a_las_18.20.07_269fbbed_fd0ygy.jpg",
+        sizes: "144x144",
+        type: "image/png",
+      },
+      {
+        url: "https://res.cloudinary.com/dezs0sktt/image/upload/v1755478227/Imagen_de_WhatsApp_2025-08-12_a_las_18.20.07_269fbbed_fd0ygy.jpg",
+        sizes: "120x120",
+        type: "image/png",
+      },
+      {
+        url: "https://res.cloudinary.com/dezs0sktt/image/upload/v1755478227/Imagen_de_WhatsApp_2025-08-12_a_las_18.20.07_269fbbed_fd0ygy.jpg",
+        sizes: "114x114",
+        type: "image/png",
+      },
+      {
+        url: "https://res.cloudinary.com/dezs0sktt/image/upload/v1755478227/Imagen_de_WhatsApp_2025-08-12_a_las_18.20.07_269fbbed_fd0ygy.jpg",
+        sizes: "76x76",
+        type: "image/png",
+      },
+      {
+        url: "https://res.cloudinary.com/dezs0sktt/image/upload/v1755478227/Imagen_de_WhatsApp_2025-08-12_a_las_18.20.07_269fbbed_fd0ygy.jpg",
+        sizes: "72x72",
+        type: "image/png",
+      },
+      {
+        url: "https://res.cloudinary.com/dezs0sktt/image/upload/v1755478227/Imagen_de_WhatsApp_2025-08-12_a_las_18.20.07_269fbbed_fd0ygy.jpg",
+        sizes: "60x60",
+        type: "image/png",
+      },
+      {
+        url: "https://res.cloudinary.com/dezs0sktt/image/upload/v1755478227/Imagen_de_WhatsApp_2025-08-12_a_las_18.20.07_269fbbed_fd0ygy.jpg",
+        sizes: "57x57",
+        type: "image/png",
       },
     ],
+    shortcut:
+      "https://res.cloudinary.com/dezs0sktt/image/upload/v1755478227/Imagen_de_WhatsApp_2025-08-12_a_las_18.20.07_269fbbed_fd0ygy.jpg",
   },
 }
 
 export const viewport: Viewport = {
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: APP_CONFIG.app.themeColor },
-    { media: "(prefers-color-scheme: dark)", color: "#1e40af" },
+    { media: "(prefers-color-scheme: dark)", color: "#304673" },
   ],
   width: "device-width",
   initialScale: 1,
@@ -143,8 +199,97 @@ export default function RootLayout({
         <meta name="msapplication-tap-highlight" content="no" />
 
         {/* Favicon y Apple Touch Icon */}
-        <link rel="apple-touch-icon" href={splashLogoSrc} />
-        <link rel="icon" type={faviconSrc.startsWith("data:") ? "image/svg+xml" : "image/png"} href={faviconSrc} />
+        <link
+          rel="apple-touch-icon"
+          href="https://res.cloudinary.com/dezs0sktt/image/upload/v1755478227/Imagen_de_WhatsApp_2025-08-12_a_las_18.20.07_269fbbed_fd0ygy.jpg"
+        />
+        <link
+          rel="apple-touch-icon"
+          sizes="57x57"
+          href="https://res.cloudinary.com/dezs0sktt/image/upload/v1755478227/Imagen_de_WhatsApp_2025-08-12_a_las_18.20.07_269fbbed_fd0ygy.jpg"
+        />
+        <link
+          rel="apple-touch-icon"
+          sizes="60x60"
+          href="https://res.cloudinary.com/dezs0sktt/image/upload/v1755478227/Imagen_de_WhatsApp_2025-08-12_a_las_18.20.07_269fbbed_fd0ygy.jpg"
+        />
+        <link
+          rel="apple-touch-icon"
+          sizes="72x72"
+          href="https://res.cloudinary.com/dezs0sktt/image/upload/v1755478227/Imagen_de_WhatsApp_2025-08-12_a_las_18.20.07_269fbbed_fd0ygy.jpg"
+        />
+        <link
+          rel="apple-touch-icon"
+          sizes="76x76"
+          href="https://res.cloudinary.com/dezs0sktt/image/upload/v1755478227/Imagen_de_WhatsApp_2025-08-12_a_las_18.20.07_269fbbed_fd0ygy.jpg"
+        />
+        <link
+          rel="apple-touch-icon"
+          sizes="114x114"
+          href="https://res.cloudinary.com/dezs0sktt/image/upload/v1755478227/Imagen_de_WhatsApp_2025-08-12_a_las_18.20.07_269fbbed_fd0ygy.jpg"
+        />
+        <link
+          rel="apple-touch-icon"
+          sizes="120x120"
+          href="https://res.cloudinary.com/dezs0sktt/image/upload/v1755478227/Imagen_de_WhatsApp_2025-08-12_a_las_18.20.07_269fbbed_fd0ygy.jpg"
+        />
+        <link
+          rel="apple-touch-icon"
+          sizes="144x144"
+          href="https://res.cloudinary.com/dezs0sktt/image/upload/v1755478227/Imagen_de_WhatsApp_2025-08-12_a_las_18.20.07_269fbbed_fd0ygy.jpg"
+        />
+        <link
+          rel="apple-touch-icon"
+          sizes="152x152"
+          href="https://res.cloudinary.com/dezs0sktt/image/upload/v1755478227/Imagen_de_WhatsApp_2025-08-12_a_las_18.20.07_269fbbed_fd0ygy.jpg"
+        />
+        <link
+          rel="apple-touch-icon"
+          sizes="180x180"
+          href="https://res.cloudinary.com/dezs0sktt/image/upload/v1755478227/Imagen_de_WhatsApp_2025-08-12_a_las_18.20.07_269fbbed_fd0ygy.jpg"
+        />
+        <link
+          rel="icon"
+          type="image/png"
+          href="https://res.cloudinary.com/dezs0sktt/image/upload/v1755478227/Imagen_de_WhatsApp_2025-08-12_a_las_18.20.07_269fbbed_fd0ygy.jpg"
+        />
+
+        {/* Apple Splash Screens */}
+        <link
+          rel="apple-touch-startup-image"
+          href="https://res.cloudinary.com/dezs0sktt/image/upload/v1755478227/Imagen_de_WhatsApp_2025-08-12_a_las_18.20.07_269fbbed_fd0ygy.jpg"
+          media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+        />
+        <link
+          rel="apple-touch-startup-image"
+          href="https://res.cloudinary.com/dezs0sktt/image/upload/v1755478227/Imagen_de_WhatsApp_2025-08-12_a_las_18.20.07_269fbbed_fd0ygy.jpg"
+          media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+        />
+        <link
+          rel="apple-touch-startup-image"
+          href="https://res.cloudinary.com/dezs0sktt/image/upload/v1755478227/Imagen_de_WhatsApp_2025-08-12_a_las_18.20.07_269fbbed_fd0ygy.jpg"
+          media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
+        />
+        <link
+          rel="apple-touch-startup-image"
+          href="https://res.cloudinary.com/dezs0sktt/image/upload/v1755478227/Imagen_de_WhatsApp_2025-08-12_a_las_18.20.07_269fbbed_fd0ygy.jpg"
+          media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+        />
+        <link
+          rel="apple-touch-startup-image"
+          href="https://res.cloudinary.com/dezs0sktt/image/upload/v1755478227/Imagen_de_WhatsApp_2025-08-12_a_las_18.20.07_269fbbed_fd0ygy.jpg"
+          media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
+        />
+        <link
+          rel="apple-touch-startup-image"
+          href="https://res.cloudinary.com/dezs0sktt/image/upload/v1755478227/Imagen_de_WhatsApp_2025-08-12_a_las_18.20.07_269fbbed_fd0ygy.jpg"
+          media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+        />
+        <link
+          rel="apple-touch-startup-image"
+          href="https://res.cloudinary.com/dezs0sktt/image/upload/v1755478227/Imagen_de_WhatsApp_2025-08-12_a_las_18.20.07_269fbbed_fd0ygy.jpg"
+          media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
+        />
 
         {/* Service Worker Registration */}
         <script
