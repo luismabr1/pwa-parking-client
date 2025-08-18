@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Download, Smartphone } from "lucide-react"
+import { X, Download, Smartphone } from "lucide-react"
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>
@@ -24,9 +24,13 @@ export default function PWAInstallPrompt() {
     console.log("PWAInstallPrompt: isIOSDevice =", isIOSDevice)
 
     // Check if app is already installed
-    if (window.matchMedia("(display-mode: standalone)").matches) {
+    if (
+      window.matchMedia("(display-mode: standalone)").matches ||
+      window.matchMedia("(display-mode: fullscreen)").matches ||
+      (window.navigator as any).standalone === true
+    ) {
       setIsInstalled(true)
-      console.log("PWAInstallPrompt: App is already installed (standalone mode).")
+      console.log("PWAInstallPrompt: App is already installed.")
       return
     }
 
@@ -37,23 +41,16 @@ export default function PWAInstallPrompt() {
       return
     }
 
-    // For iOS, show banner after a delay
-    if (isIOSDevice) {
-      console.log("PWAInstallPrompt: iOS device detected. Scheduling banner show.")
-      const timer = setTimeout(() => {
-        setShowBanner(true)
-        console.log("PWAInstallPrompt: iOS banner shown after delay.")
-      }, 8000) // Show after 8 seconds
-      return () => clearTimeout(timer)
-    }
-
     // Listen for the beforeinstallprompt event (Android/Chrome)
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault()
       setDeferredPrompt(e as BeforeInstallPromptEvent)
       console.log("PWAInstallPrompt: beforeinstallprompt event fired.")
-      // Show banner immediately when prompt is available
-      setShowBanner(true)
+      // Show banner after a short delay for Android
+      setTimeout(() => {
+        setShowBanner(true)
+        console.log("PWAInstallPrompt: Android banner shown.")
+      }, 3000)
     }
 
     // Listen for app installed event
@@ -68,11 +65,38 @@ export default function PWAInstallPrompt() {
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt)
     window.addEventListener("appinstalled", handleAppInstalled)
 
+    // For iOS, show banner after a delay
+    if (isIOSDevice) {
+      console.log("PWAInstallPrompt: iOS device detected. Scheduling banner show.")
+      const timer = setTimeout(() => {
+        setShowBanner(true)
+        console.log("PWAInstallPrompt: iOS banner shown after delay.")
+      }, 8000) // Show after 8 seconds
+      return () => clearTimeout(timer)
+    }
+
+    // For Android devices, if no beforeinstallprompt event after 10 seconds,
+    // check if it's a compatible browser and show manual instructions
+    if (!isIOSDevice) {
+      const fallbackTimer = setTimeout(() => {
+        if (!deferredPrompt && "serviceWorker" in navigator) {
+          console.log("PWAInstallPrompt: No beforeinstallprompt event, showing fallback for Android.")
+          setShowBanner(true)
+        }
+      }, 10000)
+
+      return () => {
+        clearTimeout(fallbackTimer)
+        window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt)
+        window.removeEventListener("appinstalled", handleAppInstalled)
+      }
+    }
+
     return () => {
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt)
       window.removeEventListener("appinstalled", handleAppInstalled)
     }
-  }, [])
+  }, [deferredPrompt])
 
   const handleInstallClick = async () => {
     console.log("PWAInstallPrompt: Install button clicked.")
@@ -117,11 +141,11 @@ export default function PWAInstallPrompt() {
     return null
   }
 
-  console.log("PWAInstallPrompt: Rendering banner.")
+  console.log("PWAInstallPrompt: Rendering banner. isIOS:", isIOS, "deferredPrompt:", !!deferredPrompt)
   return (
     <div
       className={`fixed bottom-0 left-0 right-0 z-50 border-t border-border shadow-lg ${
-        isIOS ? "bg-background/80 backdrop-blur-md" : "bg-background"
+        isIOS ? "backdrop-blur-md bg-background/80" : "bg-background"
       }`}
     >
       <div className="max-w-md mx-auto p-4">
@@ -138,7 +162,8 @@ export default function PWAInstallPrompt() {
           </div>
 
           <div className="flex items-center gap-2">
-            {!isIOS && deferredPrompt && (
+            {/* Mostrar botón de instalar SOLO en Android */}
+            {!isIOS && (
               <Button
                 onClick={handleInstallClick}
                 size="sm"
@@ -150,7 +175,7 @@ export default function PWAInstallPrompt() {
             )}
 
             <Button onClick={handleDismiss} variant="ghost" size="sm" className="p-1 h-8 w-8">
-              X
+              <X className="h-4 w-4" />
             </Button>
           </div>
         </div>
