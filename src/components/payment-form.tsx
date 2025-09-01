@@ -1,5 +1,4 @@
 "use client"
-
 import type React from "react"
 import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
@@ -129,12 +128,14 @@ const formatFullIdentityNumber = (identityType: string, identityNumber: string):
 export default function PaymentForm({ ticket }: PaymentFormProps) {
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [currentStep, setCurrentStep] = useState(0) // Start at Step 0 for multi-payment
+  const [currentStep, setCurrentStep] = useState(0)
   const [paymentType, setPaymentType] = useState<
     "pago_movil" | "transferencia" | "efectivo_bs" | "efectivo_usd" | null
   >(null)
   const [isMultiplePayment, setIsMultiplePayment] = useState(false)
   const [ticketQuantity, setTicketQuantity] = useState(1)
+  const [validTicketCount, setValidTicketCount] = useState(1) // Default to 1
+  const [validTicketCodes, setValidTicketCodes] = useState<string[]>([ticket.codigoTicket])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)
@@ -142,6 +143,7 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
   const [loadingSettings, setLoadingSettings] = useState(true)
   const [banks, setBanks] = useState<Bank[]>([])
   const [loadingBanks, setLoadingBanks] = useState(true)
+  const [loadingValidTickets, setLoadingValidTickets] = useState(true)
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [showNotificationPrompt, setShowNotificationPrompt] = useState(false)
@@ -154,7 +156,6 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
     isValid: false,
     message: "",
   })
-
   const {
     isSupported: notificationsSupported,
     isSubscribed: notificationsEnabled,
@@ -174,6 +175,7 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
       tipoIdentidad?: string
       isMultiplePayment?: boolean
       ticketQuantity?: number
+      ticketCodes?: string[]
     }
   >({
     referenciaTransferencia: "",
@@ -185,26 +187,35 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
     tiempoSalida: "now",
     isMultiplePayment: false,
     ticketQuantity: 1,
+    ticketCodes: [ticket.codigoTicket],
   })
 
   useEffect(() => {
-    Promise.all([fetchCompanySettings(), fetchBanks()])
+    Promise.all([fetchCompanySettings(), fetchBanks(), fetchValidTickets()])
       .then(() => {
         setLoadingSettings(false)
         setLoadingBanks(false)
+        setLoadingValidTickets(false)
       })
       .catch((error) => {
         console.error("Error initializing:", error)
         setLoadingSettings(false)
         setLoadingBanks(false)
+        setLoadingValidTickets(false)
+        setError("Error al cargar datos iniciales")
       })
   }, [])
 
   useEffect(() => {
+    // Enforce minimum of 2 for multiple payment and cap at validTicketCount
+    const minQuantity = isMultiplePayment ? 2 : 1
+    const newTicketQuantity = Math.max(minQuantity, Math.min(ticketQuantity, validTicketCount))
+    setTicketQuantity(newTicketQuantity)
     setFormData((prev) => ({
       ...prev,
       isMultiplePayment,
-      ticketQuantity,
+      ticketQuantity: newTicketQuantity,
+      ticketCodes: validTicketCodes.slice(0, newTicketQuantity),
       montoPagado: paymentType?.startsWith("efectivo_usd")
         ? totalMontoUsd
         : paymentType
@@ -213,7 +224,7 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
             ? totalMontoBs
             : totalMontoUsd,
     }))
-  }, [isMultiplePayment, ticketQuantity, paymentType, totalMontoUsd, totalMontoBs])
+  }, [isMultiplePayment, ticketQuantity, validTicketCount, validTicketCodes, paymentType, totalMontoUsd, totalMontoBs])
 
   const fetchCompanySettings = async () => {
     try {
@@ -240,6 +251,25 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
       }
     } catch (error) {
       console.error("Error:", error)
+    }
+  }
+
+  const fetchValidTickets = async () => {
+    try {
+      const response = await fetch(`/api/tickets/valid?ticketCode=${ticket.codigoTicket}`)
+      if (response.ok) {
+        const data = await response.json()
+        setValidTicketCount(data.validTicketCount || 1)
+        setValidTicketCodes(data.validTicketCodes || [ticket.codigoTicket])
+      } else {
+        console.error("Error fetching valid tickets")
+        setValidTicketCount(1) // Fallback to 1 if API fails
+        setValidTicketCodes([ticket.codigoTicket])
+      }
+    } catch (error) {
+      console.error("Error fetching valid tickets:", error)
+      setValidTicketCount(1)
+      setValidTicketCodes([ticket.codigoTicket])
     }
   }
 
@@ -362,7 +392,15 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
 
   const handleQuantityChange = (increment: boolean) => {
     setTicketQuantity((prev) => {
-      const newQuantity = increment ? Math.min(prev + 1, 10) : Math.max(prev - 1, 1)
+      const minQuantity = isMultiplePayment ? 2 : 1
+      const maxQuantity = validTicketCount
+      const newQuantity = increment ? Math.min(prev + 1, maxQuantity) : Math.max(prev - 1, minQuantity)
+      // Update formData.ticketCodes to match newQuantity
+      setFormData((prevForm) => ({
+        ...prevForm,
+        ticketQuantity: newQuantity,
+        ticketCodes: validTicketCodes.slice(0, newQuantity),
+      }))
       return newQuantity
     })
   }
@@ -378,6 +416,7 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
       const numeroIdentidadCompleto = formatFullIdentityNumber(formData.tipoIdentidad || "V", formData.numeroIdentidad)
       const paymentData = {
         codigoTicket: ticket.codigoTicket,
+        ticketCodes: formData.ticketCodes, // Send array of ticket codes
         tipoPago: paymentType,
         montoPagado: formData.montoPagado,
         tiempoSalida: formData.tiempoSalida || "now",
@@ -443,6 +482,9 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
       if (!formData.tiempoSalida) {
         return { isValid: false, message: "Debe seleccionar el tiempo de salida estimado" }
       }
+      if (formData.ticketQuantity && formData.ticketQuantity > validTicketCount) {
+        return { isValid: false, message: `No puede pagar más de ${validTicketCount} tickets válidos` }
+      }
     }
     return { isValid: true, message: "" }
   }
@@ -495,6 +537,9 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                   <h3 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">📋 Pago Múltiple Registrado</h3>
                   <p className="text-blue-700 dark:text-blue-300 mb-2">
                     Has pagado por <strong>{ticketQuantity} tickets</strong>
+                  </p>
+                  <p className="text-sm text-blue-600 dark:text-blue-400">
+                    Tickets: <strong>{formData.ticketCodes?.join(", ")}</strong>
                   </p>
                   <p className="text-sm text-blue-600 dark:text-blue-400">
                     Monto total:{" "}
@@ -554,7 +599,7 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
     )
   }
 
-  const isLoaded = !loadingSettings && !loadingBanks
+  const isLoaded = !loadingSettings && !loadingBanks && !loadingValidTickets
 
   return (
     <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-4">
@@ -570,7 +615,6 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
             </div>
             <p className="text-center text-sm text-muted-foreground">Paso {currentStep + 1} de 5</p>
           </div>
-
           {error && (
             <Alert className="mb-4" variant="destructive">
               <AlertCircle className="h-4 w-4" />
@@ -583,7 +627,6 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
               <AlertDescription>{copySuccess}</AlertDescription>
             </Alert>
           )}
-
           {/* PASO 0: Selección de tipo de pago (único o múltiple) */}
           {currentStep === 0 && (
             <div className="space-y-6">
@@ -606,6 +649,7 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                   onClick={() => {
                     setIsMultiplePayment(false)
                     setTicketQuantity(1)
+                    setFormData((prev) => ({ ...prev, ticketCodes: [ticket.codigoTicket], ticketQuantity: 1 }))
                     nextStep()
                   }}
                   variant={!isMultiplePayment ? "default" : "outline"}
@@ -622,13 +666,17 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                 </Button>
                 <div className="space-y-3">
                   <Button
-                    onClick={() => setIsMultiplePayment(true)}
+                    onClick={() => {
+                      setIsMultiplePayment(true)
+                      setTicketQuantity(Math.min(2, validTicketCount)) // Ensure initial quantity respects validTicketCount
+                    }}
                     variant={isMultiplePayment ? "default" : "outline"}
                     className="w-full h-16 text-left justify-between"
+                    disabled={validTicketCount < 2} // Disable if less than 2 valid tickets
                   >
                     <div>
                       <div className="font-medium">Pagar Múltiples Tickets</div>
-                      <div className="text-sm opacity-75">Pago de varios tickets a la vez</div>
+                      <div className="text-sm opacity-75">Mínimo 2, máximo {validTicketCount} tickets</div>
                     </div>
                     <div className="text-right">
                       <div className="font-bold">{formatCurrency(totalMontoUsd)}</div>
@@ -642,7 +690,7 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                           onClick={() => handleQuantityChange(false)}
                           variant="outline"
                           size="sm"
-                          disabled={ticketQuantity <= 1}
+                          disabled={ticketQuantity <= 2}
                           className="h-10 w-10 p-0"
                         >
                           -
@@ -655,12 +703,18 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                           onClick={() => handleQuantityChange(true)}
                           variant="outline"
                           size="sm"
-                          disabled={ticketQuantity >= 10}
+                          disabled={ticketQuantity >= validTicketCount}
                           className="h-10 w-10 p-0"
                         >
                           +
                         </Button>
                       </div>
+                      <p className="text-sm text-muted-foreground text-center mt-2">
+                        Mínimo 2, máximo {validTicketCount} tickets válidos disponibles
+                      </p>
+                      <p className="text-sm text-muted-foreground text-center">
+                        Tickets: {validTicketCodes.slice(0, ticketQuantity).join(", ")}
+                      </p>
                       <div className="text-center mt-4 p-3 bg-green-50 dark:bg-green-950/20 rounded border border-green-200 dark:border-green-800/30">
                         <p className="text-sm text-green-600 dark:text-green-400 mb-1">Monto Total a Pagar</p>
                         <p className="text-xl font-bold text-green-600">{formatCurrency(totalMontoUsd)}</p>
@@ -669,8 +723,7 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                       <Alert className="mt-3 bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800/30">
                         <AlertCircle className="h-4 w-4 text-blue-600" />
                         <AlertDescription className="text-blue-800 dark:text-blue-200">
-                          <strong>Importante:</strong> Deberás presentar {ticketQuantity} tickets físicos al momento de la
-                          validación.
+                          <strong>Importante:</strong> Deberás presentar {ticketQuantity} tickets físicos válidos al momento de la validación.
                         </AlertDescription>
                       </Alert>
                       <Button onClick={nextStep} className="w-full mt-4">
@@ -682,7 +735,6 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
               </div>
             </div>
           )}
-
           {/* PASO 1: Selección de método de pago */}
           {currentStep === 1 && (
             <div className="space-y-6">
@@ -694,7 +746,7 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                       {isMultiplePayment ? `Pagando ${ticketQuantity} tickets` : "Código de Ticket"}
                     </p>
                     <p className="text-lg font-medium">
-                      {isMultiplePayment ? `${ticket.codigoTicket} + ${ticketQuantity - 1} más` : ticket.codigoTicket}
+                      {isMultiplePayment ? validTicketCodes.slice(0, ticketQuantity).join(", ") : ticket.codigoTicket}
                     </p>
                   </div>
                   <div>
@@ -785,7 +837,6 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
               </div>
             </div>
           )}
-
           {/* PASO 2: Información bancaria de la empresa */}
           {currentStep === 2 && (
             <div className="space-y-6">
@@ -797,7 +848,7 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                       {isMultiplePayment ? `Pagando ${ticketQuantity} tickets` : "Código de Ticket"}
                     </p>
                     <p className="text-lg font-medium">
-                      {isMultiplePayment ? `${ticket.codigoTicket} + ${ticketQuantity - 1} más` : ticket.codigoTicket}
+                      {isMultiplePayment ? validTicketCodes.slice(0, ticketQuantity).join(", ") : ticket.codigoTicket}
                     </p>
                   </div>
                   <div>
@@ -1030,7 +1081,6 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
               </div>
             </div>
           )}
-
           {/* PASO 3: Formulario de detalles de transferencia */}
           {currentStep === 3 && (
             <div className="space-y-4">
@@ -1046,7 +1096,7 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                   <p className="text-sm text-muted-foreground">
                     {isMultiplePayment ? `Monto Total (${ticketQuantity} tickets)` : "Monto a Pagar"}
                   </p>
-                  <div className="text-center p-4 bg-green-50 dark:bg-green-950/20 rounded-lg mb-4 border border-green-200 dark:border-green-800/30">
+                  <div className="text-center p-4 bg-green-50 dark:bg-green-950/20 rounded-lg mb-4 border border-green-200 dark:border-blue-800/30">
                     <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                       {formatCurrency(totalMontoBs, "VES")}
                     </p>
@@ -1056,6 +1106,11 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                     {isMultiplePayment && (
                       <p className="text-sm text-green-600 dark:text-green-400 mt-1">
                         ({formatCurrency(ticket.montoCalculado)} × {ticketQuantity} tickets)
+                      </p>
+                    )}
+                    {isMultiplePayment && (
+                      <p className="text-sm text-green-600 dark:text-green-400 mt-1">
+                        Tickets: {validTicketCodes.slice(0, ticketQuantity).join(", ")}
                       </p>
                     )}
                   </div>
@@ -1307,7 +1362,6 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
               </div>
             </div>
           )}
-
           {/* PASO 4: Vista previa y confirmación */}
           {currentStep === 4 && (
             <div className="space-y-6">
@@ -1325,7 +1379,7 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                         {isMultiplePayment ? `Pagando ${ticketQuantity} tickets` : "Código de Ticket"}
                       </p>
                       <p className="text-xl font-bold mb-3">
-                        {isMultiplePayment ? `${ticket.codigoTicket} + ${ticketQuantity - 1} más` : ticket.codigoTicket}
+                        {isMultiplePayment ? validTicketCodes.slice(0, ticketQuantity).join(", ") : ticket.codigoTicket}
                       </p>
                       <p className="text-sm text-muted-foreground mb-1">Monto Total a Pagar</p>
                       {paymentType === "efectivo_bs" ? (
@@ -1360,7 +1414,7 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                         {isMultiplePayment ? `Pagando ${ticketQuantity} tickets` : "Código de Ticket"}
                       </p>
                       <p className="text-lg font-bold">
-                        {isMultiplePayment ? `${ticket.codigoTicket} + ${ticketQuantity - 1} más` : ticket.codigoTicket}
+                        {isMultiplePayment ? validTicketCodes.slice(0, ticketQuantity).join(", ") : ticket.codigoTicket}
                       </p>
                     </div>
                     <div className="text-center p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800/30">
@@ -1374,6 +1428,11 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                       {isMultiplePayment && (
                         <p className="text-sm text-green-600 dark:text-green-400 mt-1">
                           ({formatCurrency(ticket.montoCalculado)} × {ticketQuantity} tickets)
+                        </p>
+                      )}
+                      {isMultiplePayment && (
+                        <p className="text-sm text-green-600 dark:text-green-400 mt-1">
+                          Tickets: {validTicketCodes.slice(0, ticketQuantity).join(", ")}
                         </p>
                       )}
                     </div>
@@ -1427,44 +1486,46 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                       <p>Verifique que todos los datos sean correctos antes de confirmar el pago.</p>
                     </div>
                   </div>
-                  <div className="flex flex-col gap-3 pt-4">
+                  <div className="flex gap-4 pt-4">
                     <Button
                       onClick={prevStep}
                       variant="outline"
-                      className="w-full h-12 text-lg bg-muted/20 text-foreground border-muted-foreground/30 hover:bg-muted/40 hover:text-foreground"
+                      className="flex-1 h-12 text-lg bg-muted/20 text-foreground border-muted-foreground/30 hover:bg-muted/40 hover:text-foreground"
                     >
-                      <ArrowLeft className="mr-2 h-5 w-5" /> Corregir Datos
+                      <ArrowLeft className="mr-2 h-5 w-5" /> Anterior
                     </Button>
                     <Button
                       onClick={checkNotificationsBeforePayment}
-                      className="w-full h-12 text-lg"
+                      className="flex-1 h-12 text-lg"
                       disabled={isLoading}
                     >
-                      {isLoading ? "Registrando..." : "Confirmar Pago"} <CheckCircle2 className="ml-2 h-5 w-5" />
+                      {isLoading ? "Registrando..." : "Confirmar Pago"}
                     </Button>
                   </div>
                 </>
               )}
             </div>
           )}
-
-          {NOTIFICATIONS_ENABLED && (
+          {/* Notification Prompt Dialog */}
+          {showNotificationPrompt && (
             <Dialog open={showNotificationPrompt} onOpenChange={setShowNotificationPrompt}>
-              <DialogContent className="sm:max-w-md bg-background border-border p-4 shadow-2xl">
+              <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Activar Notificaciones</DialogTitle>
                   <DialogDescription>
-                    ¿Te gustaría recibir notificaciones sobre el estado de tu pago para el ticket {ticket.codigoTicket}?
+                    ¿Deseas recibir notificaciones sobre el estado de tu pago? Esto te permitirá estar al tanto cuando tu pago sea validado.
                   </DialogDescription>
                 </DialogHeader>
                 <NotificationPrompt
-                  ticketCode={ticket.codigoTicket}
-                  onEnable={enableNotificationsForTicket}
+                  onEnable={() => {
+                    enableNotificationsForTicket()
+                    setShowNotificationPrompt(false)
+                    handleSubmit()
+                  }}
                   onSkip={() => {
                     setShowNotificationPrompt(false)
                     handleSubmit()
                   }}
-                  isLoading={isLoading}
                 />
               </DialogContent>
             </Dialog>
