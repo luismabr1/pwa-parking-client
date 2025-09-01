@@ -10,6 +10,7 @@ import {
   getClientIP,
 } from "@/lib/security-utils"
 import { logSecurityEvent } from "@/lib/security-logger"
+import { saveDeviceSubscription } from "@/lib/push-notifications"
 
 // Configure Cloudinary
 cloudinary.config({
@@ -45,7 +46,6 @@ async function uploadImageToCloudinary(base64Image: string, ticketCode: string):
 
     // Limpiar y validar el formato base64
     let cleanBase64 = base64Image
-
     console.log("📤 [PROCESS-PAYMENT] Imagen original - longitud:", base64Image.length)
     console.log("📤 [PROCESS-PAYMENT] Imagen original - primeros 100 chars:", base64Image.substring(0, 100))
 
@@ -60,16 +60,13 @@ async function uploadImageToCloudinary(base64Image: string, ticketCode: string):
 
     // Validar que el base64 no esté vacío - ser más estricto con el tamaño mínimo
     const minLength = isDevMode ? 500 : 5000 // Imagen muy pequeña indica problema
-
     if (!cleanBase64 || cleanBase64.length < minLength) {
       const errorMsg = `Imagen base64 muy pequeña o inválida (${cleanBase64.length} chars, mínimo ${minLength}). Esto indica que la imagen está truncada o corrupta.`
       console.error("❌ [PROCESS-PAYMENT]", errorMsg)
-
       if (isDevMode) {
         console.log("⚠️ [PROCESS-PAYMENT] En desarrollo: continuando sin imagen debido a tamaño insuficiente")
         return null
       }
-
       throw new Error(errorMsg)
     }
 
@@ -84,19 +81,16 @@ async function uploadImageToCloudinary(base64Image: string, ticketCode: string):
       if (buffer.length < 1024) {
         const errorMsg = `Buffer de imagen muy pequeño (${buffer.length} bytes). La imagen está incompleta.`
         console.error("❌ [PROCESS-PAYMENT]", errorMsg)
-
         if (isDevMode) {
           console.log("⚠️ [PROCESS-PAYMENT] En desarrollo: continuando sin imagen debido a buffer pequeño")
           return null
         }
-
         throw new Error(errorMsg)
       }
 
       // Verificar que sea una imagen válida (debe empezar con magic bytes de JPEG o PNG)
       const isJPEG = buffer[0] === 0xff && buffer[1] === 0xd8
       const isPNG = buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47
-
       console.log("📤 [PROCESS-PAYMENT] Tipo de imagen - JPEG:", isJPEG, "PNG:", isPNG)
       console.log(
         "📤 [PROCESS-PAYMENT] Primeros 10 bytes del buffer:",
@@ -108,12 +102,10 @@ async function uploadImageToCloudinary(base64Image: string, ticketCode: string):
       if (!isJPEG && !isPNG) {
         const errorMsg = "La imagen no es un formato válido (JPEG/PNG) o está corrupta"
         console.error("❌ [PROCESS-PAYMENT]", errorMsg)
-
         if (isDevMode) {
           console.log("⚠️ [PROCESS-PAYMENT] En desarrollo: continuando sin imagen debido a formato inválido")
           return null
         }
-
         throw new Error(errorMsg)
       }
 
@@ -121,33 +113,27 @@ async function uploadImageToCloudinary(base64Image: string, ticketCode: string):
       if (isJPEG) {
         const hasEndMarker = buffer[buffer.length - 2] === 0xff && buffer[buffer.length - 1] === 0xd9
         console.log("📤 [PROCESS-PAYMENT] JPEG tiene marcador de fin:", hasEndMarker)
-
         if (!hasEndMarker) {
           const errorMsg = "La imagen JPEG está incompleta (falta marcador de fin)"
           console.error("❌ [PROCESS-PAYMENT]", errorMsg)
-
           if (isDevMode) {
             console.log("⚠️ [PROCESS-PAYMENT] En desarrollo: continuando sin imagen debido a JPEG incompleto")
             return null
           }
-
           throw new Error(errorMsg)
         }
       }
     } catch (decodeError) {
       console.error("❌ [PROCESS-PAYMENT] Error decodificando base64:", decodeError.message)
-
       if (isDevMode) {
         console.log("⚠️ [PROCESS-PAYMENT] En desarrollo: continuando sin imagen debido a error de decodificación")
         return null
       }
-
       throw new Error("Formato base64 inválido")
     }
 
     // Crear el data URI correcto para Cloudinary
     const dataUri = `data:image/jpeg;base64,${cleanBase64}`
-
     console.log("📤 [PROCESS-PAYMENT] Enviando a Cloudinary...")
     console.log("📤 [PROCESS-PAYMENT] Configuración Cloudinary:")
     console.log("   Cloud name:", process.env.CLOUDINARY_CLOUD_NAME ? "✓" : "✗")
@@ -162,11 +148,8 @@ async function uploadImageToCloudinary(base64Image: string, ticketCode: string):
       format: "jpg",
       quality: "auto:good",
     }
-
     console.log("📤 [PROCESS-PAYMENT] Opciones de subida:", uploadOptions)
-
     const uploadResponse = await cloudinary.uploader.upload(dataUri, uploadOptions)
-
     console.log("✅ [PROCESS-PAYMENT] Imagen subida exitosamente:", uploadResponse.secure_url)
     return uploadResponse.secure_url
   } catch (error) {
@@ -177,12 +160,10 @@ async function uploadImageToCloudinary(base64Image: string, ticketCode: string):
       http_code: error.http_code,
       stack: error.stack?.split("\n").slice(0, 3).join("\n"), // Solo las primeras 3 líneas del stack
     })
-
     if (isDevMode) {
       console.log("⚠️ [PROCESS-PAYMENT] En desarrollo: continuando sin imagen debido al error")
       return null // En desarrollo, continuar sin imagen si falla
     }
-
     throw new Error("Error al subir la imagen del comprobante")
   }
 }
@@ -242,13 +223,24 @@ async function processPaymentHandler(request: NextRequest, sanitizedData: any) {
     }
 
     // Validaciones de seguridad adicionales SOLO para pagos electrónicos
-    const { tipoPago, referenciaTransferencia, montoPagado, telefono } = sanitizedData
+    const {
+      tipoPago,
+      referenciaTransferencia,
+      montoPagado,
+      telefono,
+      deviceSubscription,
+      isMultiplePayment,
+      ticketQuantity,
+    } = sanitizedData
 
     if (isDevMode) {
       console.log(`🔍 [PROCESS-PAYMENT-DEBUG] tipoPago: "${tipoPago}"`)
       console.log(`🔍 [PROCESS-PAYMENT-DEBUG] referenciaTransferencia: "${referenciaTransferencia}"`)
       console.log(`🔍 [PROCESS-PAYMENT-DEBUG] montoPagado: "${montoPagado}"`)
       console.log(`🔍 [PROCESS-PAYMENT-DEBUG] telefono: "${telefono}"`)
+      console.log(`🔍 [PROCESS-PAYMENT-DEBUG] deviceSubscription: "${deviceSubscription ? "present" : "absent"}"`)
+      console.log(`🔍 [PROCESS-PAYMENT-DEBUG] isMultiplePayment: ${isMultiplePayment}`)
+      console.log(`🔍 [PROCESS-PAYMENT-DEBUG] ticketQuantity: ${ticketQuantity}`)
     }
 
     // Solo validar referencia para pagos electrónicos
@@ -322,6 +314,8 @@ async function processPaymentHandler(request: NextRequest, sanitizedData: any) {
     console.log("   Monto Pagado:", montoPagado)
     console.log("   Tiempo Salida:", tiempoSalida)
     console.log("   Tiene Imagen:", !!imagenComprobante)
+    console.log("   Es Pago Múltiple:", isMultiplePayment)
+    console.log("   Cantidad Tickets:", ticketQuantity)
 
     // Buscar ticket
     console.log("🎫 [PROCESS-PAYMENT] Buscando ticket:", codigoTicket)
@@ -337,26 +331,6 @@ async function processPaymentHandler(request: NextRequest, sanitizedData: any) {
     console.log("   Código:", ticket.codigoTicket)
     console.log("   Estado:", ticket.estado)
     console.log("   Monto Calculado:", ticket.montoCalculado)
-
-    // Validar estado del ticket - Estados válidos para pago
-    const estadosValidosParaPago = ["activo", "ocupado", "validado", "estacionado", "estacionado_confirmado"]
-
-    if (!estadosValidosParaPago.includes(ticket.estado)) {
-      let errorMsg = "Este ticket no está disponible para pago"
-
-      if (ticket.estado === "pagado_pendiente_validacion" || ticket.estado === "pagado_pendiente_taquilla") {
-        errorMsg = "Este ticket ya tiene un pago pendiente de validación"
-      } else if (ticket.estado === "pagado_validado") {
-        errorMsg = "Este ticket ya ha sido pagado y validado"
-      } else if (ticket.estado === "salido") {
-        errorMsg = "Este ticket ya ha sido utilizado para salir del estacionamiento"
-      } else if (ticket.estado === "disponible") {
-        errorMsg = "Este ticket no tiene un vehículo asignado"
-      }
-
-      console.error("❌ [PROCESS-PAYMENT] Estado de ticket inválido:", errorMsg)
-      return NextResponse.json({ success: false, message: errorMsg }, { status: 400 })
-    }
 
     const now = new Date()
 
@@ -415,13 +389,15 @@ async function processPaymentHandler(request: NextRequest, sanitizedData: any) {
       return NextResponse.json({ success: false, message: errorMsg }, { status: 400 })
     }
 
-    // Validar monto contra el calculado
-    const montoCalculadoBs = (ticket.montoCalculado || 0) * tasaCambio
+    const cantidadTickets = isMultiplePayment ? ticketQuantity || 1 : 1
+    const montoCalculadoBs = (ticket.montoCalculado || 0) * tasaCambio * cantidadTickets
     const tolerance = 0.1
 
     console.log("🔍 [PROCESS-PAYMENT] Validando montos:")
     console.log("   Monto pagado (Bs):", montoEnBs)
-    console.log("   Monto calculado (Bs):", montoCalculadoBs)
+    console.log("   Monto calculado por ticket (Bs):", (ticket.montoCalculado || 0) * tasaCambio)
+    console.log("   Cantidad de tickets:", cantidadTickets)
+    console.log("   Monto calculado total (Bs):", montoCalculadoBs)
     console.log("   Diferencia:", Math.abs(montoEnBs - montoCalculadoBs))
 
     if (
@@ -479,6 +455,9 @@ async function processPaymentHandler(request: NextRequest, sanitizedData: any) {
       montoPagado: montoEnBs,
       montoPagadoUsd: montoEnUsd,
       montoCalculado: ticket.montoCalculado || 0,
+      isMultiplePayment: isMultiplePayment || false,
+      ticketQuantity: cantidadTickets,
+      montoCalculadoTotal: (ticket.montoCalculado || 0) * cantidadTickets,
       tasaCambioUsada: tasaCambio,
       fechaPago: now,
       estado: "pendiente_validacion",
@@ -579,7 +558,6 @@ async function processPaymentHandler(request: NextRequest, sanitizedData: any) {
     // Enviar notificación push a administradores
     try {
       console.log("📱 [PROCESS-PAYMENT] Enviando notificación push a administradores...")
-
       const notificationPayload = {
         type: "admin_payment",
         ticketCode: codigoTicket,
@@ -594,9 +572,10 @@ async function processPaymentHandler(request: NextRequest, sanitizedData: any) {
           exitTime: tiempoSalida || "now",
           reference: referenciaTransferencia || null,
           bank: banco || null,
+          isMultiplePayment: isMultiplePayment || false,
+          ticketQuantity: cantidadTickets,
         },
       }
-
       const notificationResponse = await fetch(
         `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/api/send-notification`,
         {
@@ -605,7 +584,6 @@ async function processPaymentHandler(request: NextRequest, sanitizedData: any) {
           body: JSON.stringify(notificationPayload),
         },
       )
-
       if (notificationResponse.ok) {
         const responseData = await notificationResponse.json()
         console.log("✅ [PROCESS-PAYMENT] Notificación admin enviada:", responseData.sent)
@@ -613,6 +591,27 @@ async function processPaymentHandler(request: NextRequest, sanitizedData: any) {
     } catch (notificationError) {
       console.error("❌ [PROCESS-PAYMENT] Error enviando notificación push:", notificationError)
       // No fallar el pago si la notificación falla
+    }
+
+    // Procesar suscripción de dispositivo si existe
+    try {
+      if (deviceSubscription) {
+        console.log("📱 [PROCESS-PAYMENT] Creando suscripción de dispositivo para notificaciones...")
+        await saveDeviceSubscription(deviceSubscription, codigoTicket, {
+          paymentId: pagoResult.insertedId.toString(),
+          paymentType: tipoPago,
+          amount: montoEnBs,
+          plate: car?.placa || null,
+          clientIP,
+          userAgent,
+        })
+        console.log("✅ [PROCESS-PAYMENT] Suscripción de dispositivo creada exitosamente")
+      } else {
+        console.log("⚠️ [PROCESS-PAYMENT] No se proporcionó suscripción de dispositivo")
+      }
+    } catch (subscriptionError) {
+      console.error("❌ [PROCESS-PAYMENT] Error creando suscripción de dispositivo:", subscriptionError)
+      // No fallar el pago si la suscripción falla
     }
 
     const processingTime = Date.now() - startTime
@@ -631,6 +630,8 @@ async function processPaymentHandler(request: NextRequest, sanitizedData: any) {
       tiempoSalida: tiempoSalida || "now",
       processingTime,
       urlImagenComprobante: urlImagenComprobante,
+      isMultiplePayment: isMultiplePayment || false,
+      ticketQuantity: cantidadTickets,
     })
 
     response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate")

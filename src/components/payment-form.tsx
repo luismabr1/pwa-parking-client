@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -74,25 +73,19 @@ const validatePhoneNumber = (phone: string): { isValid: boolean; message: string
   if (!phone) {
     return { isValid: false, message: "El teléfono es requerido" }
   }
-
-  const cleanPhone = phone.replace(/[-\s]/g, "") // Remover guiones y espacios
-
+  const cleanPhone = phone.replace(/[-\s]/g, "")
   if (cleanPhone.length < 11) {
     return { isValid: false, message: `Faltan ${11 - cleanPhone.length} dígitos (formato: 04XX-XXXXXXX)` }
   }
-
   if (cleanPhone.length > 11) {
     return { isValid: false, message: `Sobran ${cleanPhone.length - 11} dígitos (formato: 04XX-XXXXXXX)` }
   }
-
   if (!cleanPhone.startsWith("04")) {
     return { isValid: false, message: "Debe comenzar con 04" }
   }
-
   if (!/^04\d{9}$/.test(cleanPhone)) {
     return { isValid: false, message: "Solo se permiten números (formato: 04XX-XXXXXXX)" }
   }
-
   return { isValid: true, message: "Número válido" }
 }
 
@@ -104,43 +97,31 @@ const validateIdentityNumber = (
   if (!identityType) {
     return { isValid: false, message: "Seleccione el tipo de identidad" }
   }
-
   if (!identityNumber) {
     return { isValid: false, message: "El número de identidad es requerido" }
   }
-
-  // Remover espacios y guiones
   const cleanNumber = identityNumber.replace(/[-\s]/g, "")
-
-  // Validar que solo contenga números
   if (!/^\d+$/.test(cleanNumber)) {
     return { isValid: false, message: "Solo se permiten números" }
   }
-
-  // Validar longitud según el tipo
   let minLength = 7
   let maxLength = 10
-
   if (identityType === "E") {
     minLength = 8
     maxLength = 12
   }
-
   if (cleanNumber.length < minLength) {
     return { isValid: false, message: `Mínimo ${minLength} dígitos` }
   }
-
   if (cleanNumber.length > maxLength) {
     return { isValid: false, message: `Máximo ${maxLength} dígitos` }
   }
-
   return { isValid: true, message: "Número válido" }
 }
 
 // Función para formatear el número de identidad completo
 const formatFullIdentityNumber = (identityType: string, identityNumber: string): string => {
   if (!identityType || !identityNumber) return ""
-
   const cleanNumber = identityNumber.replace(/[-\s]/g, "")
   return `${identityType}-${cleanNumber}`
 }
@@ -148,10 +129,12 @@ const formatFullIdentityNumber = (identityType: string, identityNumber: string):
 export default function PaymentForm({ ticket }: PaymentFormProps) {
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [currentStep, setCurrentStep] = useState(1)
+  const [currentStep, setCurrentStep] = useState(0) // Start at Step 0 for multi-payment
   const [paymentType, setPaymentType] = useState<
     "pago_movil" | "transferencia" | "efectivo_bs" | "efectivo_usd" | null
   >(null)
+  const [isMultiplePayment, setIsMultiplePayment] = useState(false)
+  const [ticketQuantity, setTicketQuantity] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)
@@ -162,24 +145,14 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [showNotificationPrompt, setShowNotificationPrompt] = useState(false)
-  const [copySuccess, setCopySuccess] = useState<string | null>(null) // Estado para feedback de copiar
-  // Estado para validación de teléfono en tiempo real
+  const [copySuccess, setCopySuccess] = useState<string | null>(null)
   const [phoneValidation, setPhoneValidation] = useState<{ isValid: boolean; message: string }>({
     isValid: false,
     message: "",
   })
-
-  // Estado para validación de identidad en tiempo real
   const [identityValidation, setIdentityValidation] = useState<{ isValid: boolean; message: string }>({
     isValid: false,
     message: "",
-  })
-
-  const [notificationsData, setNotificationsData] = useState({
-    isSupported: false,
-    isSubscribed: false,
-    isRegistered: false,
-    enableNotificationsForTicket: () => Promise.resolve(),
   })
 
   const {
@@ -187,32 +160,31 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
     isSubscribed: notificationsEnabled,
     isRegistered: ticketNotificationsRegistered,
     enableNotificationsForTicket,
-  } = notificationsData
+  } = useTicketNotifications(ticket.codigoTicket)
 
-  const { isSupported, isSubscribed, isRegistered } = useTicketNotifications(ticket.codigoTicket)
-
-  useEffect(() => {
-    setNotificationsData({
-      isSupported,
-      isSubscribed,
-      isRegistered,
-      enableNotificationsForTicket: () => Promise.resolve(),
-    })
-  }, [ticket.codigoTicket, isSupported, isSubscribed, isRegistered])
-
-  // Calculate montoBs using ticket.tasaCambio, fallback to companySettings if unavailable
+  // Calculate montoBs and totals
   const tasaCambio = ticket.tasaCambio || companySettings?.tarifas?.tasaCambio || 1
   const montoBs = ticket.montoBs || ticket.montoCalculado * tasaCambio
+  const totalMontoUsd = ticket.montoCalculado * ticketQuantity
+  const totalMontoBs = montoBs * ticketQuantity
 
-  // Initialize formData with a neutral value, updated by paymentType selection
-  const [formData, setFormData] = useState<PaymentFormData & { tiempoSalida?: string; tipoIdentidad?: string }>({
+  const [formData, setFormData] = useState<
+    PaymentFormData & {
+      tiempoSalida?: string
+      tipoIdentidad?: string
+      isMultiplePayment?: boolean
+      ticketQuantity?: number
+    }
+  >({
     referenciaTransferencia: "",
     banco: "",
     telefono: "",
     numeroIdentidad: "",
-    tipoIdentidad: "V", // Valor por defecto
-    montoPagado: ticket.montoCalculado, // Default to USD value
+    tipoIdentidad: "V",
+    montoPagado: ticket.montoCalculado,
     tiempoSalida: "now",
+    isMultiplePayment: false,
+    ticketQuantity: 1,
   })
 
   useEffect(() => {
@@ -227,6 +199,21 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
         setLoadingBanks(false)
       })
   }, [])
+
+  useEffect(() => {
+    setFormData((prev) => ({
+      ...prev,
+      isMultiplePayment,
+      ticketQuantity,
+      montoPagado: paymentType?.startsWith("efectivo_usd")
+        ? totalMontoUsd
+        : paymentType
+          ? totalMontoBs
+          : paymentType === "pago_movil" || paymentType === "transferencia"
+            ? totalMontoBs
+            : totalMontoUsd,
+    }))
+  }, [isMultiplePayment, ticketQuantity, paymentType, totalMontoUsd, totalMontoBs])
 
   const fetchCompanySettings = async () => {
     try {
@@ -262,14 +249,10 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
       ...prev,
       [name]: value,
     }))
-
-    // Validación en tiempo real para el teléfono
     if (name === "telefono") {
       const validation = validatePhoneNumber(value)
       setPhoneValidation(validation)
     }
-
-    // Validación en tiempo real para el número de identidad
     if (name === "numeroIdentidad") {
       const validation = validateIdentityNumber(formData.tipoIdentidad || "V", value)
       setIdentityValidation(validation)
@@ -295,8 +278,6 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
       ...prev,
       tipoIdentidad: value,
     }))
-
-    // Revalidar el número de identidad con el nuevo tipo
     if (formData.numeroIdentidad) {
       const validation = validateIdentityNumber(value, formData.numeroIdentidad)
       setIdentityValidation(validation)
@@ -306,21 +287,15 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      // Validate file type
       if (!file.type.startsWith("image/")) {
         setError("Por favor seleccione un archivo de imagen válido")
         return
       }
-
-      // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         setError("La imagen debe ser menor a 5MB")
         return
       }
-
       setSelectedImage(file)
-
-      // Create preview
       const reader = new FileReader()
       reader.onload = (e) => {
         setImagePreview(e.target?.result as string)
@@ -365,47 +340,42 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
   const getExitDateTime = (value: string) => {
     const option = exitTimeOptions.find((opt) => opt.value === value)
     if (!option) return new Date()
-
     const exitTime = new Date()
     exitTime.setMinutes(exitTime.getMinutes() + option.minutes)
     return exitTime
   }
 
-  // Función para mostrar prompt de notificaciones antes del pago
   const checkNotificationsBeforePayment = () => {
-    // Si las notificaciones están deshabilitadas, proceder directamente al pago
     if (!NOTIFICATIONS_ENABLED) {
       console.log("🔕 [NOTIFICATIONS] Notificaciones deshabilitadas por variable de entorno")
       handleSubmit()
       return
     }
-
-    // Solo mostrar si las notificaciones están habilitadas en el entorno
-    // y son soportadas y no están activadas para este ticket
     if (notificationsSupported && !ticketNotificationsRegistered && !notificationsEnabled) {
       console.log("🔔 [NOTIFICATIONS] Mostrando prompt de notificaciones")
       setShowNotificationPrompt(true)
       return
     }
-
-    // Si ya están activadas, proceder directamente
     console.log("🔔 [NOTIFICATIONS] Notificaciones ya activadas, procediendo al pago")
     handleSubmit()
+  }
+
+  const handleQuantityChange = (increment: boolean) => {
+    setTicketQuantity((prev) => {
+      const newQuantity = increment ? Math.min(prev + 1, 10) : Math.max(prev - 1, 1)
+      return newQuantity
+    })
   }
 
   const handleSubmit = async () => {
     setIsLoading(true)
     setError("")
-
     try {
       let imagenComprobante = null
       if (selectedImage) {
         imagenComprobante = await convertImageToBase64(selectedImage)
       }
-
-      // Formatear el número de identidad completo
       const numeroIdentidadCompleto = formatFullIdentityNumber(formData.tipoIdentidad || "V", formData.numeroIdentidad)
-
       const paymentData = {
         codigoTicket: ticket.codigoTicket,
         tipoPago: paymentType,
@@ -416,18 +386,16 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
         telefono: formData.telefono || undefined,
         numeroIdentidad: numeroIdentidadCompleto || undefined,
         imagenComprobante: imagenComprobante || undefined,
+        isMultiplePayment: formData.isMultiplePayment,
+        ticketQuantity: formData.ticketQuantity,
       }
-
-      // Limpiar campos vacíos para pagos en efectivo
       if (paymentType?.startsWith("efectivo")) {
         delete paymentData.referenciaTransferencia
         delete paymentData.banco
         delete paymentData.telefono
         delete paymentData.numeroIdentidad
       }
-
       console.log("Enviando datos de pago:", paymentData)
-
       const response = await fetch("/api/process-payment", {
         method: "POST",
         headers: {
@@ -435,14 +403,11 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
         },
         body: JSON.stringify(paymentData),
       })
-
       const responseData = await response.json()
-
       if (!response.ok) {
         console.error("Error response:", responseData)
         throw new Error(responseData.message || "Error al procesar el pago")
       }
-
       setSuccess(true)
     } catch (err) {
       console.error("Error en handleSubmit:", err)
@@ -455,40 +420,26 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
   const nextStep = () => setCurrentStep((prev) => prev + 1)
   const prevStep = () => setCurrentStep((prev) => prev - 1)
 
-  // Función mejorada para validar el formulario con mensajes específicos
   const getFormValidation = () => {
     if (currentStep === 3 && (paymentType === "pago_movil" || paymentType === "transferencia")) {
-      // Validar referencia
       if (!formData.referenciaTransferencia.trim()) {
         return { isValid: false, message: "Debe ingresar la referencia de la transferencia" }
       }
-
-      // Validar banco
       if (!formData.banco.trim()) {
         return { isValid: false, message: "Debe seleccionar su banco" }
       }
-
-      // Validar teléfono
       if (!phoneValidation.isValid) {
         return { isValid: false, message: phoneValidation.message || "Debe ingresar un teléfono válido" }
       }
-
-      // Validar identidad
       if (!identityValidation.isValid) {
         return { isValid: false, message: identityValidation.message || "Debe ingresar una identidad válida" }
       }
-
-      // Validar monto
       if (!formData.montoPagado || formData.montoPagado <= 0) {
         return { isValid: false, message: "Debe ingresar el monto pagado" }
       }
-
-      // Validar comprobante (ahora obligatorio)
       if (!selectedImage) {
         return { isValid: false, message: "Debe adjuntar el comprobante de pago" }
       }
-
-      // Validar tiempo de salida
       if (!formData.tiempoSalida) {
         return { isValid: false, message: "Debe seleccionar el tiempo de salida estimado" }
       }
@@ -498,13 +449,12 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
 
   const formValidation = getFormValidation()
 
-  // Función para copiar texto al portapapeles
   const copyToClipboard = (text: string, isFullCopy = false) => {
     navigator.clipboard
       .writeText(text)
       .then(() => {
         setCopySuccess(isFullCopy ? "Todos los datos copiados" : "Copiado")
-        setTimeout(() => setCopySuccess(null), 2000) // Limpia el mensaje después de 2 segundos
+        setTimeout(() => setCopySuccess(null), 2000)
       })
       .catch((err) => {
         console.error("Error al copiar al portapapeles:", err)
@@ -512,10 +462,8 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
       })
   }
 
-  // Función para copiar todos los datos
   const copyAllData = () => {
     if (!companySettings || !paymentType) return
-
     const paymentData = []
     if (paymentType === "pago_movil" && companySettings.pagoMovil) {
       if (companySettings.pagoMovil.banco) paymentData.push(`Banco: ${companySettings.pagoMovil.banco}`)
@@ -529,8 +477,7 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
       if (companySettings.transferencia.telefono)
         paymentData.push(`Teléfono: ${companySettings.transferencia.telefono}`)
     }
-    paymentData.push(`Monto a Pagar (Bs.): ${montoBs.toFixed(2)}`)
-
+    paymentData.push(`Monto a Pagar (Bs.): ${totalMontoBs.toFixed(2)}`)
     const textToCopy = paymentData.join("\n")
     copyToClipboard(textToCopy, true)
   }
@@ -542,13 +489,34 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
           <CardContent className="pt-6 text-center">
             <CheckCircle2 className="mx-auto h-16 w-16 text-green-500 mb-4" />
             <h2 className="text-2xl font-bold mb-2">¡Pago Registrado!</h2>
-            <p className="text-lg text-muted-foreground mb-4">
-              {paymentType?.startsWith("efectivo")
-                ? "Su solicitud de pago en efectivo ha sido registrada. Diríjase a la taquilla para completar el pago."
-                : "El pago ha sido registrado y está Pendiente de Validación por el personal del estacionamiento."}
-            </p>
-
-            {/* Mostrar estado de notificaciones solo si están habilitadas */}
+            {isMultiplePayment ? (
+              <div className="space-y-4">
+                <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800/30">
+                  <h3 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">📋 Pago Múltiple Registrado</h3>
+                  <p className="text-blue-700 dark:text-blue-300 mb-2">
+                    Has pagado por <strong>{ticketQuantity} tickets</strong>
+                  </p>
+                  <p className="text-sm text-blue-600 dark:text-blue-400">
+                    Monto total:{" "}
+                    <strong>{formatCurrency(formData.montoPagado, paymentType?.includes("bs") ? "VES" : "USD")}</strong>
+                  </p>
+                </div>
+                <Alert className="bg-yellow-50 dark:bg-yellow-950/20 border-yellow-200 dark:border-yellow-800/30">
+                  <AlertCircle className="h-4 w-4 text-yellow-600" />
+                  <AlertDescription className="text-yellow-800 dark:text-yellow-200">
+                    <strong>Importante:</strong> Debes llevar contigo <strong>{ticketQuantity} tickets físicos</strong>{" "}
+                    que correspondan al monto pagado. El personal de validación verificará que tengas la cantidad
+                    correcta de tickets.
+                  </AlertDescription>
+                </Alert>
+              </div>
+            ) : (
+              <p className="text-lg text-muted-foreground mb-4">
+                {paymentType?.startsWith("efectivo")
+                  ? "Su solicitud de pago en efectivo ha sido registrada. Diríjase a la taquilla para completar el pago."
+                  : "El pago ha sido registrado y está Pendiente de Validación por el personal del estacionamiento."}
+              </p>
+            )}
             {NOTIFICATIONS_ENABLED && ticketNotificationsRegistered && (
               <div className="bg-green-50 dark:bg-green-950/20 p-4 rounded-lg mb-4 border border-green-200 dark:border-green-800/30">
                 <div className="flex items-center justify-center space-x-2 text-green-800 dark:text-green-200">
@@ -560,7 +528,6 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                 </p>
               </div>
             )}
-
             {formData.tiempoSalida && formData.tiempoSalida !== "now" && (
               <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg mb-4 border border-blue-200 dark:border-blue-800/30">
                 <div className="flex items-center justify-center space-x-2 text-blue-800 dark:text-blue-200">
@@ -595,12 +562,13 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
         <CardContent className="pt-6">
           <div className="mb-6">
             <div className="flex justify-between mb-2">
-              <div className={`h-2 flex-1 rounded-l-full ${currentStep >= 1 ? "bg-primary" : "bg-muted"}`}></div>
+              <div className={`h-2 flex-1 rounded-l-full ${currentStep >= 0 ? "bg-primary" : "bg-muted"}`}></div>
+              <div className={`h-2 flex-1 ${currentStep >= 1 ? "bg-primary" : "bg-muted"}`}></div>
               <div className={`h-2 flex-1 ${currentStep >= 2 ? "bg-primary" : "bg-muted"}`}></div>
               <div className={`h-2 flex-1 ${currentStep >= 3 ? "bg-primary" : "bg-muted"}`}></div>
               <div className={`h-2 flex-1 rounded-r-full ${currentStep >= 4 ? "bg-primary" : "bg-muted"}`}></div>
             </div>
-            <p className="text-center text-sm text-muted-foreground">Paso {currentStep} de 4</p>
+            <p className="text-center text-sm text-muted-foreground">Paso {currentStep + 1} de 5</p>
           </div>
 
           {error && (
@@ -615,6 +583,106 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
               <AlertDescription>{copySuccess}</AlertDescription>
             </Alert>
           )}
+
+          {/* PASO 0: Selección de tipo de pago (único o múltiple) */}
+          {currentStep === 0 && (
+            <div className="space-y-6">
+              <div className="text-center">
+                <h2 className="text-xl font-bold mb-4">¿Cuántos tickets deseas pagar?</h2>
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Código de Ticket Base</p>
+                    <p className="text-lg font-medium">{ticket.codigoTicket}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Monto por Ticket</p>
+                    <p className="text-xl font-bold text-primary">{formatCurrency(ticket.montoCalculado)}</p>
+                    <p className="text-lg text-muted-foreground">{formatCurrency(montoBs, "VES")}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <Button
+                  onClick={() => {
+                    setIsMultiplePayment(false)
+                    setTicketQuantity(1)
+                    nextStep()
+                  }}
+                  variant={!isMultiplePayment ? "default" : "outline"}
+                  className="w-full h-16 text-left justify-between"
+                >
+                  <div>
+                    <div className="font-medium">Pagar 1 Ticket</div>
+                    <div className="text-sm opacity-75">Pago individual</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-bold">{formatCurrency(ticket.montoCalculado)}</div>
+                    <div className="text-sm opacity-75">{formatCurrency(montoBs, "VES")}</div>
+                  </div>
+                </Button>
+                <div className="space-y-3">
+                  <Button
+                    onClick={() => setIsMultiplePayment(true)}
+                    variant={isMultiplePayment ? "default" : "outline"}
+                    className="w-full h-16 text-left justify-between"
+                  >
+                    <div>
+                      <div className="font-medium">Pagar Múltiples Tickets</div>
+                      <div className="text-sm opacity-75">Pago de varios tickets a la vez</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-bold">{formatCurrency(totalMontoUsd)}</div>
+                      <div className="text-sm opacity-75">{formatCurrency(totalMontoBs, "VES")}</div>
+                    </div>
+                  </Button>
+                  {isMultiplePayment && (
+                    <div className="bg-muted/50 p-4 rounded-lg border">
+                      <div className="flex items-center justify-center space-x-4">
+                        <Button
+                          onClick={() => handleQuantityChange(false)}
+                          variant="outline"
+                          size="sm"
+                          disabled={ticketQuantity <= 1}
+                          className="h-10 w-10 p-0"
+                        >
+                          -
+                        </Button>
+                        <div className="text-center">
+                          <p className="text-2xl font-bold">{ticketQuantity}</p>
+                          <p className="text-sm text-muted-foreground">tickets</p>
+                        </div>
+                        <Button
+                          onClick={() => handleQuantityChange(true)}
+                          variant="outline"
+                          size="sm"
+                          disabled={ticketQuantity >= 10}
+                          className="h-10 w-10 p-0"
+                        >
+                          +
+                        </Button>
+                      </div>
+                      <div className="text-center mt-4 p-3 bg-green-50 dark:bg-green-950/20 rounded border border-green-200 dark:border-green-800/30">
+                        <p className="text-sm text-green-600 dark:text-green-400 mb-1">Monto Total a Pagar</p>
+                        <p className="text-xl font-bold text-green-600">{formatCurrency(totalMontoUsd)}</p>
+                        <p className="text-lg text-green-500">{formatCurrency(totalMontoBs, "VES")}</p>
+                      </div>
+                      <Alert className="mt-3 bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800/30">
+                        <AlertCircle className="h-4 w-4 text-blue-600" />
+                        <AlertDescription className="text-blue-800 dark:text-blue-200">
+                          <strong>Importante:</strong> Deberás presentar {ticketQuantity} tickets físicos al momento de la
+                          validación.
+                        </AlertDescription>
+                      </Alert>
+                      <Button onClick={nextStep} className="w-full mt-4">
+                        Continuar con {ticketQuantity} tickets
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* PASO 1: Selección de método de pago */}
           {currentStep === 1 && (
             <div className="space-y-6">
@@ -622,28 +690,27 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                 <h2 className="text-xl font-bold mb-4">Seleccione Método de Pago</h2>
                 <div className="space-y-4">
                   <div>
-                    <p className="text-sm text-muted-foreground">Código de Ticket</p>
-                    <p className="text-lg font-medium">{ticket.codigoTicket}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {isMultiplePayment ? `Pagando ${ticketQuantity} tickets` : "Código de Ticket"}
+                    </p>
+                    <p className="text-lg font-medium">
+                      {isMultiplePayment ? `${ticket.codigoTicket} + ${ticketQuantity - 1} más` : ticket.codigoTicket}
+                    </p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Monto a Pagar</p>
-                    <p className="text-2xl font-bold text-primary">{formatCurrency(ticket.montoCalculado)}</p>
-                    {ticket.montoBs && (
-                      <p className="text-lg text-muted-foreground">{formatCurrency(ticket.montoBs, "VES")}</p>
-                    )}
+                    <p className="text-sm text-muted-foreground">Monto Total a Pagar</p>
+                    <p className="text-2xl font-bold text-primary">{formatCurrency(totalMontoUsd)}</p>
+                    <p className="text-lg text-muted-foreground">{formatCurrency(totalMontoBs, "VES")}</p>
                   </div>
                 </div>
               </div>
-
               <div className="space-y-3">
                 <h3 className="font-semibold text-center mb-4">Métodos de Pago Disponibles</h3>
-
-                {/* Pago Móvil */}
                 {companySettings?.pagoMovil?.banco && (
                   <Button
                     onClick={() => {
                       setPaymentType("pago_movil")
-                      setFormData((prev) => ({ ...prev, montoPagado: montoBs }))
+                      setFormData((prev) => ({ ...prev, montoPagado: totalMontoBs }))
                       nextStep()
                     }}
                     variant={paymentType === "pago_movil" ? "default" : "outline"}
@@ -654,21 +721,15 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                       <div className="text-sm opacity-75">Transferencia instantánea</div>
                     </div>
                     <div className="text-right">
-                      <div className="font-bold">
-                        {ticket.montoBs
-                          ? formatCurrency(ticket.montoBs, "VES")
-                          : formatCurrency(ticket.montoCalculado * tasaCambio, "VES")}
-                      </div>
+                      <div className="font-bold">{formatCurrency(totalMontoBs, "VES")}</div>
                     </div>
                   </Button>
                 )}
-
-                {/* Transferencia Bancaria */}
                 {companySettings?.transferencia?.banco && (
                   <Button
                     onClick={() => {
                       setPaymentType("transferencia")
-                      setFormData((prev) => ({ ...prev, montoPagado: montoBs }))
+                      setFormData((prev) => ({ ...prev, montoPagado: totalMontoBs }))
                       nextStep()
                     }}
                     variant={paymentType === "transferencia" ? "default" : "outline"}
@@ -679,20 +740,14 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                       <div className="text-sm opacity-75">Transferencia tradicional</div>
                     </div>
                     <div className="text-right">
-                      <div className="font-bold">
-                        {ticket.montoBs
-                          ? formatCurrency(ticket.montoBs, "VES")
-                          : formatCurrency(ticket.montoCalculado * tasaCambio, "VES")}
-                      </div>
+                      <div className="font-bold">{formatCurrency(totalMontoBs, "VES")}</div>
                     </div>
                   </Button>
                 )}
-
-                {/* Efectivo Bolívares */}
                 <Button
                   onClick={() => {
                     setPaymentType("efectivo_bs")
-                    setFormData((prev) => ({ ...prev, montoPagado: montoBs }))
+                    setFormData((prev) => ({ ...prev, montoPagado: totalMontoBs }))
                     setCurrentStep(4)
                   }}
                   variant={paymentType === "efectivo_bs" ? "default" : "outline"}
@@ -703,17 +758,15 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                     <div className="text-sm opacity-75">Pago en taquilla</div>
                   </div>
                   <div className="text-right">
-                    <div className="font-bold">{formatCurrency(montoBs, "VES")}</div>
-                    <div className="text-sm opacity-75">{formatCurrency(ticket.montoCalculado)}</div>
+                    <div className="font-bold">{formatCurrency(totalMontoBs, "VES")}</div>
+                    <div className="text-sm opacity-75">{formatCurrency(totalMontoUsd)}</div>
                   </div>
                 </Button>
-
-                {/* Efectivo USD */}
                 {companySettings?.tarifas?.tasaCambio && (
                   <Button
                     onClick={() => {
                       setPaymentType("efectivo_usd")
-                      setFormData((prev) => ({ ...prev, montoPagado: ticket.montoCalculado }))
+                      setFormData((prev) => ({ ...prev, montoPagado: totalMontoUsd }))
                       setCurrentStep(4)
                     }}
                     variant={paymentType === "efectivo_usd" ? "default" : "outline"}
@@ -724,10 +777,8 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                       <div className="text-sm opacity-75">Pago en taquilla</div>
                     </div>
                     <div className="text-right">
-                      <div className="font-bold">{formatCurrency(ticket.montoCalculado)}</div>
-                      {ticket.montoBs && (
-                        <div className="text-sm opacity-75">{formatCurrency(ticket.montoBs, "VES")}</div>
-                      )}
+                      <div className="font-bold">{formatCurrency(totalMontoUsd)}</div>
+                      <div className="text-sm opacity-75">{formatCurrency(totalMontoBs, "VES")}</div>
                     </div>
                   </Button>
                 )}
@@ -735,24 +786,28 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
             </div>
           )}
 
-          {/* PASO 2: Información bancaria de la empresa (solo para pagos electrónicos) */}
+          {/* PASO 2: Información bancaria de la empresa */}
           {currentStep === 2 && (
             <div className="space-y-6">
               <div className="text-center">
                 <h2 className="text-xl font-bold mb-4">Información de Pago</h2>
                 <div className="space-y-4">
                   <div>
-                    <p className="text-sm text-muted-foreground">Código de Ticket</p>
-                    <p className="text-lg font-medium">{ticket.codigoTicket}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {isMultiplePayment ? `Pagando ${ticketQuantity} tickets` : "Código de Ticket"}
+                    </p>
+                    <p className="text-lg font-medium">
+                      {isMultiplePayment ? `${ticket.codigoTicket} + ${ticketQuantity - 1} más` : ticket.codigoTicket}
+                    </p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Monto a Pagar</p>
+                    <p className="text-sm text-muted-foreground">Monto Total a Pagar</p>
                     <div className="text-center p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800/30">
                       <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                        {formatCurrency(montoBs, "VES")}
+                        {formatCurrency(totalMontoBs, "VES")}
                       </p>
                       <p className="text-lg font-medium text-green-500 dark:text-green-300">
-                        {formatCurrency(ticket.montoCalculado)}
+                        {formatCurrency(totalMontoUsd)}
                       </p>
                     </div>
                   </div>
@@ -777,7 +832,6 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                   </div>
                   {companySettings && paymentType && (
                     <>
-                      {/* Sección de Pago Móvil */}
                       {paymentType === "pago_movil" &&
                         (companySettings.pagoMovil.banco ||
                           companySettings.pagoMovil.cedula ||
@@ -843,7 +897,6 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                             )}
                           </div>
                         )}
-                      {/* Sección de Transferencia */}
                       {paymentType === "transferencia" &&
                         (companySettings.transferencia.banco ||
                           companySettings.transferencia.cedula ||
@@ -925,17 +978,16 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                             )}
                           </div>
                         )}
-                      {/* Sección de Monto a Pagar */}
                       <div className="space-y-2">
-                        <h4 className="font-medium text-sm text-foreground">Monto a Pagar</h4>
+                        <h4 className="font-medium text-sm text-foreground">Monto Total a Pagar</h4>
                         <div className="flex justify-between items-center gap-2">
                           <span className="text-sm text-muted-foreground flex-shrink-0">Monto (Bs.):</span>
                           <div className="flex items-center gap-2 min-w-0">
-                            <span className="text-sm font-medium truncate">{formatCurrency(montoBs, "VES")}</span>
+                            <span className="text-sm font-medium truncate">{formatCurrency(totalMontoBs, "VES")}</span>
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => copyToClipboard(montoBs.toFixed(2))}
+                              onClick={() => copyToClipboard(totalMontoBs.toFixed(2))}
                               className="p-0 h-6 w-6 border border-border dark:border-border-dark flex-shrink-0"
                             >
                               <Copy className="h-3 w-3" />
@@ -945,7 +997,7 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                         <div className="flex justify-between items-center gap-2">
                           <span className="text-sm text-muted-foreground flex-shrink-0">Monto (USD):</span>
                           <span className="text-sm font-medium text-muted-foreground">
-                            {formatCurrency(ticket.montoCalculado)}
+                            {formatCurrency(totalMontoUsd)}
                           </span>
                         </div>
                       </div>
@@ -983,28 +1035,31 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
           {currentStep === 3 && (
             <div className="space-y-4">
               <h2 className="text-xl font-bold mb-4 text-center">Detalles de Transferencia</h2>
-
-              {/* Mostrar mensaje de validación si hay errores */}
               {!formValidation.isValid && (
                 <Alert className="mb-4" variant="destructive">
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>{formValidation.message}</AlertDescription>
                 </Alert>
               )}
-
               <div className="space-y-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">Monto a Pagar</p>
+                  <p className="text-sm text-muted-foreground">
+                    {isMultiplePayment ? `Monto Total (${ticketQuantity} tickets)` : "Monto a Pagar"}
+                  </p>
                   <div className="text-center p-4 bg-green-50 dark:bg-green-950/20 rounded-lg mb-4 border border-green-200 dark:border-green-800/30">
                     <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                      {formatCurrency(montoBs, "VES")}
+                      {formatCurrency(totalMontoBs, "VES")}
                     </p>
                     <p className="text-lg font-medium text-green-500 dark:text-green-300">
-                      {formatCurrency(ticket.montoCalculado)}
+                      {formatCurrency(totalMontoUsd)}
                     </p>
+                    {isMultiplePayment && (
+                      <p className="text-sm text-green-600 dark:text-green-400 mt-1">
+                        ({formatCurrency(ticket.montoCalculado)} × {ticketQuantity} tickets)
+                      </p>
+                    )}
                   </div>
                 </div>
-
                 <div className="space-y-2">
                   <label htmlFor="referenciaTransferencia" className="text-sm font-medium">
                     Referencia de la Transferencia *
@@ -1019,7 +1074,6 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                     required
                   />
                 </div>
-
                 <div className="space-y-2">
                   <label htmlFor="banco" className="text-sm font-medium">
                     Banco *
@@ -1037,7 +1091,6 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                     </SelectContent>
                   </Select>
                 </div>
-
                 <div className="space-y-2">
                   <label htmlFor="telefono" className="text-sm font-medium">
                     Teléfono *
@@ -1075,7 +1128,6 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                   )}
                   <p className="text-xs text-muted-foreground">Formato: 04XX-XXXXXXX (11 dígitos total)</p>
                 </div>
-
                 <div className="space-y-2">
                   <label htmlFor="tipoIdentidad" className="text-sm font-medium">
                     Tipo de Identidad *
@@ -1093,7 +1145,6 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                     </SelectContent>
                   </Select>
                 </div>
-
                 <div className="space-y-2">
                   <label htmlFor="numeroIdentidad" className="text-sm font-medium">
                     Número de Identidad *
@@ -1136,7 +1187,6 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                   )}
                   <p className="text-xs text-muted-foreground">Solo números, sin guiones ni espacios</p>
                 </div>
-
                 <div className="space-y-2">
                   <label htmlFor="montoPagado" className="text-sm font-medium">
                     Monto Pagado (Bs.) *
@@ -1149,15 +1199,13 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                     value={formData.montoPagado}
                     onChange={handleChange}
                     className="h-12 text-lg"
-                    placeholder={`${formatCurrency(montoBs, "VES")}`}
+                    placeholder={`${formatCurrency(totalMontoBs, "VES")}`}
                     required
                   />
                   <p className="text-sm text-green-600 dark:text-green-400 font-medium">
-                    Referencia: {formatCurrency(montoBs, "VES")} ({formatCurrency(ticket.montoCalculado)})
+                    Referencia: {formatCurrency(totalMontoBs, "VES")} ({formatCurrency(totalMontoUsd)})
                   </p>
                 </div>
-
-                {/* Sección de imagen obligatoria */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium flex items-center">
                     <ImageIcon className="h-4 w-4 mr-2" />
@@ -1188,7 +1236,7 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                       </div>
                     ) : (
                       <div className="relative">
-                        <div className="border rounded-lg p-2 bg-muted/50">
+                        <div className="border rounded-lg p-2 bg-card">
                           <div className="flex items-center justify-between mb-2">
                             <span className="text-sm font-medium text-green-600 dark:text-green-400">
                               ✓ Imagen seleccionada
@@ -1221,8 +1269,6 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                     </p>
                   </div>
                 </div>
-
-                {/* Selector de tiempo de salida */}
                 <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800/30">
                   <div className="space-y-2">
                     <Label htmlFor="tiempoSalida" className="text-sm font-medium flex items-center">
@@ -1247,7 +1293,6 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                   </div>
                 </div>
               </div>
-
               <div className="flex gap-4 pt-4">
                 <Button
                   onClick={prevStep}
@@ -1263,11 +1308,10 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
             </div>
           )}
 
-          {/* PASO 4: Vista previa y confirmación (para pagos electrónicos) o Efectivo */}
+          {/* PASO 4: Vista previa y confirmación */}
           {currentStep === 4 && (
             <div className="space-y-6">
               {paymentType?.startsWith("efectivo") ? (
-                // Pantalla de efectivo
                 <>
                   <h2 className="text-xl font-bold mb-4 text-center">Pago en Efectivo</h2>
                   <div className="bg-blue-50 dark:bg-blue-950/20 p-6 rounded-lg text-center border border-blue-200 dark:border-blue-800/30">
@@ -1277,20 +1321,24 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                       Para completar su pago en efectivo, diríjase a la taquilla del estacionamiento.
                     </p>
                     <div className="bg-card p-4 rounded-lg border">
-                      <p className="text-sm text-muted-foreground mb-1">Código de Ticket</p>
-                      <p className="text-xl font-bold mb-3">{ticket.codigoTicket}</p>
-                      <p className="text-sm text-muted-foreground mb-1">Monto a Pagar</p>
+                      <p className="text-sm text-muted-foreground mb-1">
+                        {isMultiplePayment ? `Pagando ${ticketQuantity} tickets` : "Código de Ticket"}
+                      </p>
+                      <p className="text-xl font-bold mb-3">
+                        {isMultiplePayment ? `${ticket.codigoTicket} + ${ticketQuantity - 1} más` : ticket.codigoTicket}
+                      </p>
+                      <p className="text-sm text-muted-foreground mb-1">Monto Total a Pagar</p>
                       {paymentType === "efectivo_bs" ? (
                         <div>
                           <p className="text-2xl font-bold text-primary">
                             {formatCurrency(formData.montoPagado, "VES")}
                           </p>
-                          <p className="text-lg text-muted-foreground">{formatCurrency(ticket.montoCalculado)}</p>
+                          <p className="text-lg text-muted-foreground">{formatCurrency(totalMontoUsd)}</p>
                         </div>
                       ) : (
                         <div>
                           <p className="text-2xl font-bold text-primary">{formatCurrency(formData.montoPagado)}</p>
-                          <p className="text-lg text-muted-foreground">{formatCurrency(montoBs, "VES")}</p>
+                          <p className="text-lg text-muted-foreground">{formatCurrency(totalMontoBs, "VES")}</p>
                         </div>
                       )}
                     </div>
@@ -1304,28 +1352,33 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                   </Button>
                 </>
               ) : (
-                // Vista previa para pagos electrónicos
                 <>
                   <h2 className="text-xl font-bold mb-4 text-center">Confirmar Datos del Pago</h2>
                   <div className="bg-muted/50 p-6 rounded-lg space-y-4 border">
                     <div className="text-center">
-                      <p className="text-sm text-muted-foreground">Código de Ticket</p>
-                      <p className="text-lg font-bold">{ticket.codigoTicket}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {isMultiplePayment ? `Pagando ${ticketQuantity} tickets` : "Código de Ticket"}
+                      </p>
+                      <p className="text-lg font-bold">
+                        {isMultiplePayment ? `${ticket.codigoTicket} + ${ticketQuantity - 1} más` : ticket.codigoTicket}
+                      </p>
                     </div>
-
                     <div className="text-center p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800/30">
-                      <p className="text-sm text-muted-foreground mb-1">Monto a Pagar</p>
+                      <p className="text-sm text-muted-foreground mb-1">Monto Total a Pagar</p>
                       <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                        {formatCurrency(montoBs, "VES")}
+                        {formatCurrency(totalMontoBs, "VES")}
                       </p>
                       <p className="text-lg font-medium text-green-500 dark:text-green-300">
-                        {formatCurrency(ticket.montoCalculado)}
+                        {formatCurrency(totalMontoUsd)}
                       </p>
+                      {isMultiplePayment && (
+                        <p className="text-sm text-green-600 dark:text-green-400 mt-1">
+                          ({formatCurrency(ticket.montoCalculado)} × {ticketQuantity} tickets)
+                        </p>
+                      )}
                     </div>
-
                     <div className="space-y-3">
                       <h3 className="font-semibold text-center">Detalles del Pago</h3>
-
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         <div>
                           <p className="text-muted-foreground">Tipo de Pago:</p>
@@ -1333,27 +1386,22 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                             {paymentType === "pago_movil" ? "Pago Móvil" : "Transferencia Bancaria"}
                           </p>
                         </div>
-
                         <div>
                           <p className="text-muted-foreground">Tiempo de Salida:</p>
                           <p className="font-medium">{getExitTimeLabel(formData.tiempoSalida || "now")}</p>
                         </div>
-
                         <div>
                           <p className="text-muted-foreground">Referencia:</p>
                           <p className="font-medium">{formData.referenciaTransferencia}</p>
                         </div>
-
                         <div>
                           <p className="text-muted-foreground">Banco:</p>
                           <p className="font-medium">{formData.banco}</p>
                         </div>
-
                         <div>
                           <p className="text-muted-foreground">Teléfono:</p>
                           <p className="font-medium">{formData.telefono}</p>
                         </div>
-
                         <div>
                           <p className="text-muted-foreground">Identidad:</p>
                           <p className="font-medium">
@@ -1361,7 +1409,6 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                           </p>
                         </div>
                       </div>
-
                       {selectedImage && (
                         <div className="mt-4">
                           <p className="text-muted-foreground text-sm mb-2">Comprobante adjunto:</p>
@@ -1376,12 +1423,10 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                         </div>
                       )}
                     </div>
-
                     <div className="text-center text-sm text-muted-foreground pt-2">
                       <p>Verifique que todos los datos sean correctos antes de confirmar el pago.</p>
                     </div>
                   </div>
-
                   <div className="flex flex-col gap-3 pt-4">
                     <Button
                       onClick={prevStep}
@@ -1402,31 +1447,30 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
               )}
             </div>
           )}
+
+          {NOTIFICATIONS_ENABLED && (
+            <Dialog open={showNotificationPrompt} onOpenChange={setShowNotificationPrompt}>
+              <DialogContent className="sm:max-w-md bg-background border-border p-4 shadow-2xl">
+                <DialogHeader>
+                  <DialogTitle>Activar Notificaciones</DialogTitle>
+                  <DialogDescription>
+                    ¿Te gustaría recibir notificaciones sobre el estado de tu pago para el ticket {ticket.codigoTicket}?
+                  </DialogDescription>
+                </DialogHeader>
+                <NotificationPrompt
+                  ticketCode={ticket.codigoTicket}
+                  onEnable={enableNotificationsForTicket}
+                  onSkip={() => {
+                    setShowNotificationPrompt(false)
+                    handleSubmit()
+                  }}
+                  isLoading={isLoading}
+                />
+              </DialogContent>
+            </Dialog>
+          )}
         </CardContent>
       </Card>
-
-      {/* Dialog para prompt de notificaciones - solo si están habilitadas */}
-      {NOTIFICATIONS_ENABLED && (
-        <Dialog open={showNotificationPrompt} onOpenChange={setShowNotificationPrompt}>
-          <DialogContent className="sm:max-w-md bg-background border-border p-4 shadow-2xl">
-            <DialogHeader>
-              <DialogTitle>Activar Notificaciones</DialogTitle>
-              <DialogDescription>
-                ¿Te gustaría recibir notificaciones sobre el estado de tu pago para el ticket {ticket.codigoTicket}?
-              </DialogDescription>
-            </DialogHeader>
-            <NotificationPrompt
-              ticketCode={ticket.codigoTicket}
-              onEnable={enableNotificationsForTicket}
-              onSkip={() => {
-                setShowNotificationPrompt(false)
-                handleSubmit()
-              }}
-              isLoading={isLoading}
-            />
-          </DialogContent>
-        </Dialog>
-      )}
     </div>
   )
 }
