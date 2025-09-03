@@ -128,6 +128,7 @@ const formatFullIdentityNumber = (identityType: string, identityNumber: string):
 export default function PaymentForm({ ticket }: PaymentFormProps) {
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const ticketsFileInputRef = useRef<HTMLInputElement>(null)
   const [currentStep, setCurrentStep] = useState(0)
   const [paymentType, setPaymentType] = useState<
     "pago_movil" | "transferencia" | "efectivo_bs" | "efectivo_usd" | null
@@ -146,6 +147,8 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
   const [loadingValidTickets, setLoadingValidTickets] = useState(true)
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [selectedTicketsImage, setSelectedTicketsImage] = useState<File | null>(null)
+  const [imageTicketsPreview, setImageTicketsPreview] = useState<string | null>(null)
   const [showNotificationPrompt, setShowNotificationPrompt] = useState(false)
   const [copySuccess, setCopySuccess] = useState<string | null>(null)
   const [phoneValidation, setPhoneValidation] = useState<{ isValid: boolean; message: string }>({
@@ -335,11 +338,40 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
     }
   }
 
+  const handleTicketsImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      if (!file.type.startsWith("image/")) {
+        setError("Por favor seleccione un archivo de imagen válido para los tickets.")
+        return
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        setError("La imagen de los tickets debe ser menor a 5MB.")
+        return
+      }
+      setSelectedTicketsImage(file)
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        setImageTicketsPreview(e.target?.result as string)
+      }
+      reader.readAsDataURL(file)
+      setError("")
+    }
+  }
+
   const removeImage = () => {
     setSelectedImage(null)
     setImagePreview(null)
     if (fileInputRef.current) {
       fileInputRef.current.value = ""
+    }
+  }
+
+  const removeTicketsImage = () => {
+    setSelectedTicketsImage(null)
+    setImageTicketsPreview(null)
+    if (ticketsFileInputRef.current) {
+      ticketsFileInputRef.current.value = ""
     }
   }
 
@@ -405,56 +437,61 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
     })
   }
 
-  const handleSubmit = async () => {
-    setIsLoading(true)
-    setError("")
-    try {
-      let imagenComprobante = null
-      if (selectedImage) {
-        imagenComprobante = await convertImageToBase64(selectedImage)
-      }
-      const numeroIdentidadCompleto = formatFullIdentityNumber(formData.tipoIdentidad || "V", formData.numeroIdentidad)
-      const paymentData = {
-        codigoTicket: ticket.codigoTicket,
-        ticketCodes: formData.ticketCodes, // Send array of ticket codes
-        tipoPago: paymentType,
-        montoPagado: formData.montoPagado,
-        tiempoSalida: formData.tiempoSalida || "now",
-        referenciaTransferencia: formData.referenciaTransferencia || undefined,
-        banco: formData.banco || undefined,
-        telefono: formData.telefono || undefined,
-        numeroIdentidad: numeroIdentidadCompleto || undefined,
-        imagenComprobante: imagenComprobante || undefined,
-        isMultiplePayment: formData.isMultiplePayment,
-        ticketQuantity: formData.ticketQuantity,
-      }
-      if (paymentType?.startsWith("efectivo")) {
-        delete paymentData.referenciaTransferencia
-        delete paymentData.banco
-        delete paymentData.telefono
-        delete paymentData.numeroIdentidad
-      }
-      console.log("Enviando datos de pago:", paymentData)
-      const response = await fetch("/api/process-payment", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(paymentData),
-      })
-      const responseData = await response.json()
-      if (!response.ok) {
-        console.error("Error response:", responseData)
-        throw new Error(responseData.message || "Error al procesar el pago")
-      }
-      setSuccess(true)
-    } catch (err) {
-      console.error("Error en handleSubmit:", err)
-      setError(err instanceof Error ? err.message : "Error al procesar el pago")
-    } finally {
-      setIsLoading(false)
+const handleSubmit = async () => {
+  setIsLoading(true);
+  setError("");
+  try {
+    let imagenComprobante = null;
+    if (selectedImage) {
+      imagenComprobante = await convertImageToBase64(selectedImage);
     }
+    let imagenTickets = null;
+    if (selectedTicketsImage) {
+      imagenTickets = await convertImageToBase64(selectedTicketsImage);
+    }
+    const numeroIdentidadCompleto = formatFullIdentityNumber(formData.tipoIdentidad || "V", formData.numeroIdentidad);
+    const paymentData = {
+      codigoTicket: ticket.codigoTicket,
+      ticketCodes: formData.ticketCodes,
+      tipoPago: paymentType,
+      montoPagado: formData.montoPagado,
+      tiempoSalida: formData.tiempoSalida || "now",
+      referenciaTransferencia: formData.referenciaTransferencia || undefined,
+      banco: formData.banco || undefined,
+      telefono: formData.telefono || undefined,
+      numeroIdentidad: numeroIdentidadCompleto || undefined,
+      imagenComprobante: imagenComprobante || undefined,
+      imagenTickets: imagenTickets || undefined, // Add this line
+      isMultiplePayment: formData.isMultiplePayment,
+      ticketQuantity: formData.ticketQuantity,
+    };
+    if (paymentType?.startsWith("efectivo")) {
+      delete paymentData.referenciaTransferencia;
+      delete paymentData.banco;
+      delete paymentData.telefono;
+      delete paymentData.numeroIdentidad;
+    }
+    console.log("Enviando datos de pago:", paymentData);
+    const response = await fetch("/api/process-payment", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(paymentData),
+    });
+    const responseData = await response.json();
+    if (!response.ok) {
+      console.error("Error response:", responseData);
+      throw new Error(responseData.message || "Error al procesar el pago");
+    }
+    setSuccess(true);
+  } catch (err) {
+    console.error("Error en handleSubmit:", err);
+    setError(err instanceof Error ? err.message : "Error al procesar el pago");
+  } finally {
+    setIsLoading(false);
   }
+};
 
   const nextStep = () => setCurrentStep((prev) => prev + 1)
   const prevStep = () => setCurrentStep((prev) => prev - 1)
@@ -478,6 +515,9 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
       }
       if (!selectedImage) {
         return { isValid: false, message: "Debe adjuntar el comprobante de pago" }
+      }
+      if (isMultiplePayment && !selectedTicketsImage) {
+        return { isValid: false, message: "Debe adjuntar una imagen con los tickets a pagar." };
       }
       if (!formData.tiempoSalida) {
         return { isValid: false, message: "Debe seleccionar el tiempo de salida estimado" }
@@ -538,9 +578,9 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                   <p className="text-blue-700 dark:text-blue-300 mb-2">
                     Has pagado por <strong>{ticketQuantity} tickets</strong>
                   </p>
-                  <p className="text-sm text-blue-600 dark:text-blue-400">
+{/*                   <p className="text-sm text-blue-600 dark:text-blue-400">
                     Tickets: <strong>{formData.ticketCodes?.join(", ")}</strong>
-                  </p>
+                  </p> */}
                   <p className="text-sm text-blue-600 dark:text-blue-400">
                     Monto total:{" "}
                     <strong>{formatCurrency(formData.montoPagado, paymentType?.includes("bs") ? "VES" : "USD")}</strong>
@@ -672,7 +712,7 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                     }}
                     variant={isMultiplePayment ? "default" : "outline"}
                     className="w-full h-16 text-left justify-between"
-                    disabled={validTicketCount < 2} // Disable if less than 2 valid tickets
+                     disabled={validTicketCount < 2} // Disable if less than 2 valid tickets 
                   >
                     <div>
                       <div className="font-medium">Pagar Múltiples Tickets</div>
@@ -690,7 +730,7 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                           onClick={() => handleQuantityChange(false)}
                           variant="outline"
                           size="sm"
-                          disabled={ticketQuantity <= 2}
+                          disabled={ticketQuantity <= 2} 
                           className="h-10 w-10 p-0"
                         >
                           -
@@ -712,9 +752,9 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                       <p className="text-sm text-muted-foreground text-center mt-2">
                         Mínimo 2, máximo {validTicketCount} tickets válidos disponibles
                       </p>
-                      <p className="text-sm text-muted-foreground text-center">
+{/*                       <p className="text-sm text-muted-foreground text-center">
                         Tickets: {validTicketCodes.slice(0, ticketQuantity).join(", ")}
-                      </p>
+                      </p> */}
                       <div className="text-center mt-4 p-3 bg-green-50 dark:bg-green-950/20 rounded border border-green-200 dark:border-green-800/30">
                         <p className="text-sm text-green-600 dark:text-green-400 mb-1">Monto Total a Pagar</p>
                         <p className="text-xl font-bold text-green-600">{formatCurrency(totalMontoUsd)}</p>
@@ -723,7 +763,7 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                       <Alert className="mt-3 bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800/30">
                         <AlertCircle className="h-4 w-4 text-blue-600" />
                         <AlertDescription className="text-blue-800 dark:text-blue-200">
-                          <strong>Importante:</strong> Deberás presentar {ticketQuantity} tickets físicos válidos al momento de la validación.
+                          <strong>Importante:</strong> Deberás enviar por el formulario de pago una captura de los tickets a pagar y entregar {ticketQuantity} tickets físicos válidos al momento de su retiro.
                         </AlertDescription>
                       </Alert>
                       <Button onClick={nextStep} className="w-full mt-4">
@@ -819,7 +859,7 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                     onClick={() => {
                       setPaymentType("efectivo_usd")
                       setFormData((prev) => ({ ...prev, montoPagado: totalMontoUsd }))
-                      setCurrentStep(4)
+                    setCurrentStep(4)
                     }}
                     variant={paymentType === "efectivo_usd" ? "default" : "outline"}
                     className="w-full h-16 text-left justify-between"
@@ -1324,6 +1364,68 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                     </p>
                   </div>
                 </div>
+                {isMultiplePayment && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium flex items-center">
+                      <ImageIcon className="h-4 w-4 mr-2" />
+                      Tickets a Pagar *
+                    </label>
+                    <div className="space-y-2">
+                      {!selectedTicketsImage ? (
+                        <div className="border-2 border-dashed border-border rounded-lg p-4 text-center">
+                          <Upload className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
+                          <p className="text-sm text-muted-foreground mb-2">
+                            <strong>Obligatorio:</strong> Suba una foto de los {ticketQuantity} tickets a pagar.
+                          </p>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => ticketsFileInputRef.current?.click()}
+                            className="text-sm"
+                          >
+                            Seleccionar Imagen
+                          </Button>
+                          <input
+                            ref={ticketsFileInputRef}
+                            type="file"
+                            accept="image/*"
+                            onChange={handleTicketsImageUpload}
+                            className="hidden"
+                          />
+                        </div>
+                      ) : (
+                        <div className="relative">
+                          <div className="border rounded-lg p-2 bg-card">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-sm font-medium text-green-600 dark:text-green-400">
+                                ✓ Imagen de tickets seleccionada
+                              </span>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={removeTicketsImage}
+                                className="text-red-500 hover:text-red-700"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            {imageTicketsPreview && (
+                              <img
+                                src={imageTicketsPreview}
+                                alt="Vista previa de tickets"
+                                className="w-full h-32 object-cover rounded"
+                              />
+                            )}
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {selectedTicketsImage.name} ({(selectedTicketsImage.size / 1024 / 1024).toFixed(2)} MB)
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
                 <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800/30">
                   <div className="space-y-2">
                     <Label htmlFor="tiempoSalida" className="text-sm font-medium flex items-center">
@@ -1478,6 +1580,19 @@ export default function PaymentForm({ ticket }: PaymentFormProps) {
                               className="w-full h-32 object-cover rounded"
                             />
                             <p className="text-xs text-muted-foreground mt-1 text-center">{selectedImage.name}</p>
+                          </div>
+                        </div>
+                      )}
+                      {isMultiplePayment && selectedTicketsImage && (
+                        <div className="mt-4">
+                          <p className="text-muted-foreground text-sm mb-2">Imagen de tickets adjunta:</p>
+                          <div className="border rounded-lg p-2 bg-card">
+                            <img
+                              src={imageTicketsPreview! || "/placeholder.svg"}
+                              alt="Tickets a pagar"
+                              className="w-full h-32 object-cover rounded"
+                            />
+                            <p className="text-xs text-muted-foreground mt-1 text-center">{selectedTicketsImage.name}</p>
                           </div>
                         </div>
                       )}

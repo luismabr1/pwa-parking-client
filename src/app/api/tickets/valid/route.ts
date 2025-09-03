@@ -30,7 +30,7 @@ async function handleGetValidTickets(request: NextRequest) {
   // Find the car associated with the provided ticketCode
   const car = await db.collection("cars").findOne({
     ticketAsociado: ticketCode,
-    estado: { $in: ["estacionado", "estacionado_confirmado", "pago_pendiente"] },
+    estado: "estacionado_confirmado",
   });
 
   if (!car) {
@@ -46,27 +46,28 @@ async function handleGetValidTickets(request: NextRequest) {
     return NextResponse.json({ message: "No se encontró vehículo asociado al ticket" }, { status: 404 });
   }
 
-  // Find all valid tickets for the same telefono or numeroIdentidad
-  const validTickets = await db.collection("tickets").find({
+  // Count all cars with estado "estacionado_confirmado" for the same telefono or numeroIdentidad
+  const validCars = await db.collection("cars").countDocuments({
     $or: [
-      { estado: "activo" },
-      { estado: "validado" },
-      { estado: "pago_rechazado" },
+      { telefono: car.telefono },
+      { numeroIdentidad: car.numeroIdentidad },
     ],
-    _id: { $in: (await db.collection("cars").find({
-      $or: [
-        { telefono: car.telefono },
-        { numeroIdentidad: car.numeroIdentidad },
-      ],
-      estado: { $in: ["estacionado", "estacionado_confirmado", "pago_pendiente"] },
-    }).toArray()).map(c => c.ticketAsociado) },
-  }).toArray();
+    estado: "estacionado_confirmado",
+  });
 
-  console.log(`✅ Encontrados ${validTickets.length} tickets válidos para ticketCode: ${ticketCode}`);
+  const validTicketCodes = (await db.collection("cars").find({
+    $or: [
+      { telefono: car.telefono },
+      { numeroIdentidad: car.numeroIdentidad },
+    ],
+    estado: "estacionado_confirmado",
+  }).toArray()).map(c => c.ticketAsociado);
+
+  console.log(`✅ Encontrados ${validCars} tickets válidos (estacionado_confirmado) para ticketCode: ${ticketCode}`);
 
   const responseData = {
-    validTicketCount: validTickets.length,
-    validTicketCodes: validTickets.map(ticket => ticket.codigoTicket),
+    validTicketCount: validCars,
+    validTicketCodes: validTicketCodes,
   };
 
   const nextResponse = NextResponse.json(responseData);

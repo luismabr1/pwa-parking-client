@@ -86,13 +86,13 @@ function sanitizeBody(body: any): any {
 
   for (const [key, value] of Object.entries(body)) {
     if (typeof value === "string") {
-      // Special handling for base64 images
-      if (key === "imagenComprobante" && value.startsWith("data:image/")) {
+      // Special handling for base64 images (both comprobante and tickets)
+      if ((key === "imagenComprobante" || key === "imagenTickets") && value.startsWith("data:image/")) {
         // Don't truncate or sanitize base64 images, just validate format
         if (value.length > 100 && value.includes(",")) {
           sanitized[key] = value // Keep full image
         } else {
-          console.warn(`⚠️ [SECURITY] Imagen base64 inválida o muy pequeña: ${value.length} chars`)
+          console.warn(`⚠️ [SECURITY] Imagen base64 inválida o muy pequeña: ${value.length} chars para ${key}`)
           sanitized[key] = null
         }
       } else {
